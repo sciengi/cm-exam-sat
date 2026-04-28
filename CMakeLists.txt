@@ -10,18 +10,28 @@ add_compile_options(-Wall -Wextra -Wpedantic)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 
+# === Temporary CNF test program ===
 
-# === Main program ===
+set(TEST_CNF test_cnf)
 
-set(SOURCES
-    src/main.cpp
-    src/cnf/cnf.cpp
+add_executable(${TEST_CNF} src/test_cnf.cpp src/cnf/cnf.cpp)
+
+target_include_directories(${TEST_CNF} PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
-add_executable(${PROJECT_NAME} ${SOURCES})
 
-target_include_directories(${PROJECT_NAME} PRIVATE
+# === Solver program ===
+
+set(SOLVER solver)
+
+set(SOURCES
+    src/solver.cpp
+)
+
+add_executable(${SOLVER} ${SOURCES})
+
+target_include_directories(${SOLVER} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/cnf
 )
 
