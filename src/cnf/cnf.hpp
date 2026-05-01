@@ -14,7 +14,16 @@ class CNF {
 
         size_t variable_count() const;
 
+        size_t clause_count() const;
+
         bool operator()(const model& model);
+
+        class clause {
+            int operator[](int i);
+        };
+
+        clause& operator[](int i);
+
 };
 
 #endif

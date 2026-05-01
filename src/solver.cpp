@@ -26,7 +26,7 @@ int main() {
     auto deriv = build_deriv(cnf, alpha, beta, lambda, mu);
     
     const double initial_step = 0.001;
-    some_ode_solver nm(initial_step, state.size());
+    some_ode_solver nm(state.size(), initial_step);
 
     CNF::model model(cnf.variable_count());
     decode(state, model);
