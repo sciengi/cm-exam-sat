@@ -92,4 +92,3 @@ bool CNF::operator()(const CNF::model& model) {
 
     return true;
 }
-
