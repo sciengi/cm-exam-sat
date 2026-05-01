@@ -3,17 +3,18 @@
 
 #include <filesystem>
 #include <vector>
-#include <algorithm>
 
 
 
 class CNF {
     public:
+        using model = std::vector<bool>;
+
         CNF(std::filesystem::path dimacscnf_file);
 
         size_t variable_count() const;
 
-        bool operator()(const std::vector<bool>& model);
+        bool operator()(const model& model);
 };
 
 #endif
