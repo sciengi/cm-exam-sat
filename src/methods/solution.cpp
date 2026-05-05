@@ -5,14 +5,16 @@
 
 // TODO: localize state size
 
-static std::size_t literal_to_state_index(int lit, std::size_t L)
-{
+
+
+static size_t literal_to_state_index(int lit, std::size_t L) {
     if (lit > 0) {
-        return static_cast<std::size_t>(lit - 1);
+        return static_cast<size_t>(lit - 1);
     }
 
-    return static_cast<std::size_t>(-lit - 1) + L;
+    return static_cast<size_t>(-lit - 1) + L;
 }
+
 
 state_t init_state(size_t variable_count) {
 
@@ -69,9 +71,9 @@ deriv_t build_deriv(const CNF& cnf, double alpha, double beta, double lambda, do
         double cl_mul;
         for (size_t i = 0; i < N; i++) {
            
-            std::size_t q1 = literal_to_state_index(cnf[i][0], L);
-            std::size_t q2 = literal_to_state_index(cnf[i][1], L);
-            std::size_t q3 = literal_to_state_index(cnf[i][2], L);
+            size_t q1 = literal_to_state_index(cnf[i][0], L);
+            size_t q2 = literal_to_state_index(cnf[i][1], L);
+            size_t q3 = literal_to_state_index(cnf[i][2], L);
 
             cl_mul = x[q1] * x[q2] * x[q3];
 
