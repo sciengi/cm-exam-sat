@@ -31,10 +31,19 @@ deriv_t build_deriv(const CNF& cnf, double alpha, double beta, double lambda, do
     std::vector<double> pairs(L);  // DEV: in this method all system members scalars
     std::vector<double> triples(N);
 
+    // DEV: 
+    // - DIMACS variables has 1-based index with negative indexies for NEG
+    // - method array is 0-based index with + L shift for NEG
+
     std::vector<std::vector<size_t>> cl_indexies(2 * L);
-    for (size_t i = 0; i < cl_indexies.size(); i++) {
-        // add ...
+    for (size_t i = 0; i < cnf.clause_count(); i++) {
+        for (size_t q = 0; q < cnf.var_in_clause; q++) {
+            size_t ind = cnf[i][q] > 0 ? cnf[i][q] - 1 : -cnf[i][q] + L - 1;
+            cl_indexies[ind].push_back(i);  
+        }
     }
+    
+    // DEV: suppose (okey for DIMACS) that no mixed cnf => one concrete literal in clause 
 
     return [
         &cnf,
@@ -44,7 +53,7 @@ deriv_t build_deriv(const CNF& cnf, double alpha, double beta, double lambda, do
         pairs   = std::move(pairs),
         triples = std::move(triples),
         cl_indexies = std::move(cl_indexies)
-    ](const state_t& x, state_t& dx) mutable {
+    ](const state_t& x, state_t& dx) mutable -> void {
 
         for (size_t i = 0; i < L; i++) {
             pairs[i] = -alpha * std::pow(x[i] * x[i + L], lambda);
@@ -53,9 +62,9 @@ deriv_t build_deriv(const CNF& cnf, double alpha, double beta, double lambda, do
         double cl_mul;
         for (size_t i = 0; i < N; i++) {
            
-            int q1 = cnf[i][0] > 0 ? cnf[i][0] : -cnf[i][0] + L; // TODO: add to CNF
-            int q2 = cnf[i][1] > 0 ? cnf[i][1] : -cnf[i][1] + L;
-            int q3 = cnf[i][2] > 0 ? cnf[i][2] : -cnf[i][2] + L;
+            int q1 = cnf[i][0] > 0 ? cnf[i][0] : -cnf[i][0] + L - 1; // TODO: add to CNF
+            int q2 = cnf[i][1] > 0 ? cnf[i][1] : -cnf[i][1] + L - 1;
+            int q3 = cnf[i][2] > 0 ? cnf[i][2] : -cnf[i][2] + L - 1;
 
             cl_mul = x[q1] * x[q2] * x[q3];
 
@@ -69,8 +78,6 @@ deriv_t build_deriv(const CNF& cnf, double alpha, double beta, double lambda, do
 
             dx[i] = pairs[i % L] - beta * cl_sum;
         }
-
-
     };
 
     // TODO: clip to [0, inf)

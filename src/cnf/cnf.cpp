@@ -71,7 +71,7 @@ size_t CNF::variable_count() const { return m_variable_count; }
 size_t CNF::clause_count() const { return m_clause_count; }
 
 
-std::span<const int, CNF::var_in_clause> CNF::operator[](int i) {
+std::span<const int, CNF::var_in_clause> CNF::operator[](int i) const {
     return std::span<const int, var_in_clause>{m_data.get() + i * var_in_clause, var_in_clause}; 
 }
 

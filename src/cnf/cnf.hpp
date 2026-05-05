@@ -20,7 +20,7 @@ class CNF {
 
         size_t clause_count() const;
 
-        std::span<const int, CNF::var_in_clause> operator[](int i);
+        std::span<const int, CNF::var_in_clause> operator[](int i) const;
 
         bool operator()(const model& model);
 

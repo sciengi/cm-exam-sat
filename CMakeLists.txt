@@ -20,6 +20,15 @@ target_include_directories(${TEST_CNF} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
+# === Temporary CNF test program ===
+
+set(TEST_BUILD_DERIV test_build_deriv)
+
+add_executable(${TEST_BUILD_DERIV} src/test_build_deriv.cpp src/cnf/cnf.cpp src/methods/solution.cpp)
+
+target_include_directories(${TEST_BUILD_DERIV} PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
 
 # === Solver program ===
 
@@ -27,6 +36,8 @@ set(SOLVER solver)
 
 set(SOURCES
     src/solver.cpp
+    src/cnf/cnf.cpp
+    src/methods/solution.cpp
 )
 
 add_executable(${SOLVER} ${SOURCES})
