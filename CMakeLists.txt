@@ -38,6 +38,7 @@ set(SOURCES
     src/solver.cpp
     src/cnf/cnf.cpp
     src/methods/solution.cpp
+    src/numeric/ode.cpp
 )
 
 add_executable(${SOLVER} ${SOURCES})

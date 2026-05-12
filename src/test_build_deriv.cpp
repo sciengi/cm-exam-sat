@@ -1,7 +1,7 @@
 
 #include <cnf/cnf.hpp>
 #include <methods/solution.hpp>
-#include <numeric/some_ode_solver.hpp>
+#include <numeric/ode.hpp>
 
 #include <string>
 #include <iostream>
