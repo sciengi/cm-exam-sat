@@ -21,17 +21,21 @@ target_include_directories(${TEST_CNF} PRIVATE
 )
 
 
-# === Solver program ===
+# # === Solver program ===
 
-set(SOLVER solver)
+# set(SOLVER solver)
 
-set(SOURCES
-    src/solver.cpp
-)
+# set(SOURCES
+#     src/solver.cpp
+# )
 
-add_executable(${SOLVER} ${SOURCES})
+# add_executable(solver
+#     src/solver.cpp
+#     src/cnf/cnf.cpp
+#     src/methods/solution.cpp
+#     src/numeric/some_ode_solver.cpp
+# )
 
-target_include_directories(${SOLVER} PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/src
-)
-
+# target_include_directories(solver PRIVATE
+#     ${CMAKE_CURRENT_SOURCE_DIR}/src
+# )
