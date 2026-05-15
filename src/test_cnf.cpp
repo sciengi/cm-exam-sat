@@ -11,7 +11,7 @@ const size_t MAX_TRY_COUNT = 100;
 
 int main() {
 
-    CNF cnf("DUMMY_PATH_TO_CNF");
+    CNF cnf("../bench/test/normal.cnf");
 
     std::vector<bool> model(cnf.variable_count());
 
@@ -19,15 +19,20 @@ int main() {
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> dis(0, 1);
 
+    bool result;
     size_t counter = 1;
-    while (counter <= MAX_TRY_COUNT && !cnf(model)) {
+    while (counter <= MAX_TRY_COUNT && (result = cnf(model)) == false) {
         std::generate(model.begin(), model.end(), [&]() { return dis(gen); });
         counter++;
     }
 
-    if (counter > MAX_TRY_COUNT)
-        std::cout << "Too many attempts" << std::endl;
-    else
-        std::cout << "Found solution at attempt #" << counter << std::endl;
+    if (result) {
+        std::cout << "SAT at attempt #" << counter << " model is: ";
+        for (size_t i = 0; i < model.size() - 1; i++)
+            std::cout << model[i] << ' ';
+        std::cout << model.back() << std::endl;
+    } else {
+        std::cout << "FAIL: too many attempts" << std::endl;
+    }
 }
 
