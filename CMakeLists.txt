@@ -30,20 +30,37 @@ target_include_directories(${TEST_BUILD_DERIV} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
-# === Solver program ===
+# === Solver program method I ===
 
-set(SOLVER solver)
+set(SOLVER_I solver_mI)
 
 set(SOURCES
-    src/solver.cpp
+    src/solver_mI.cpp
     src/cnf/cnf.cpp
     src/methods/solution.cpp
     src/numeric/ode.cpp
 )
 
-add_executable(${SOLVER} ${SOURCES})
+add_executable(${SOLVER_I} ${SOURCES})
 
-target_include_directories(${SOLVER} PRIVATE
+target_include_directories(${SOLVER_I} PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+
+# === Solver program method II ===
+
+set(SOLVER_II solver_mII)
+
+set(SOURCES
+    src/solver_mII.cpp
+    src/cnf/cnf.cpp
+    src/methods/universe.cpp
+    src/numeric/ode.cpp
+)
+
+add_executable(${SOLVER_II} ${SOURCES})
+
+target_include_directories(${SOLVER_II} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
