@@ -76,7 +76,7 @@ std::span<const int, CNF::var_in_clause> CNF::operator[](int i) const {
 }
 
 
-bool CNF::operator()(const CNF::model& model) {
+bool CNF::operator()(const CNF::model& model) const {
   
     bool cl_result;
     for (size_t i = 0; i < clause_count(); i++) {
