@@ -7,7 +7,6 @@
 #include <span>
 
 
-
 class CNF {
     public:
         using model = std::vector<bool>;  // DEV: make std::span?

@@ -47,3 +47,28 @@ target_include_directories(${SOLVER} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
+# === N-body method II derivative test ===
+
+add_executable(test_nbody_deriv
+    src/test_nbody_deriv.cpp
+    src/cnf/cnf.cpp
+    src/methods/nbody.cpp
+)
+
+target_include_directories(test_nbody_deriv PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+
+
+# === N-body method II solver ===
+
+add_executable(nbody_solver
+    src/nbody_solver.cpp
+    src/cnf/cnf.cpp
+    src/methods/nbody.cpp
+    src/numeric/ode.cpp
+)
+
+target_include_directories(nbody_solver PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
