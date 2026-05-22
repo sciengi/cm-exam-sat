@@ -12,25 +12,29 @@
 
 ```
 root
-├── CMakeLists.txt
-├── bench           # Несколько примеров КНФ
-└── src
-    ├── cnf                      # Программное представление КНФ
-    │
-    ├── methods                  # Исследуемые методы
-    │   
-    ├── numeric                  # Решатели систем ОДУ
-    │
-    ├── solver_nbody.cpp         # Решатель на методе II
-    ├── solver_solution.cpp      # Решатель на методе  I
-    │
-    ├── test_cnf.cpp             # Простой случайный решатель
-    ├── test_nbody_deriv.cpp     # \
-    └── test_solution_deriv.cpp  # / Проверка производных методов 
+├── README.md
+├── bench      # Несколько примеров КНФ
+├── explore
+└── solver
+    ├── CMakeLists.txt
+    └── src
+        ├── cnf                      # Программное представление КНФ
+        ├── methods                  # Исследуемые методы
+        ├── numeric                  # Решатели систем ОДУ
+        │
+        ├── solver_complete.cpp      # Решатель полным перебором
+        │
+        ├── solver_nbody.cpp         # Решатель на методе II
+        ├── solver_solution.cpp      # Решатель на методе  I
+        │
+        ├── test_cnf.cpp             # Простой случайный решатель
+        ├── test_nbody_deriv.cpp     # \
+        └── test_solution_deriv.cpp  # / Проверка производных методов
 ```
 
 Проект использует C++20 и CMake, сборка:
 ```
+$ cd solver
 $ mkdir build
 $ cd build
 $ cmake ..
