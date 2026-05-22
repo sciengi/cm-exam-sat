@@ -1,2 +1,4 @@
-build/
+solver/build/
 .cache/
+bench/*
+!bench/README.md
