@@ -48,6 +48,11 @@ set(SOURCES src/test_nbody_deriv.cpp)
 add_executable(test_nbody_deriv ${SOURCES})
 target_link_libraries(test_nbody_deriv PRIVATE cnf method_nbody)
 
+# ===== Solver on nbody method =========
+set(SOURCES src/solver_complete.cpp)
+add_executable(solver_complete ${SOURCES})
+target_link_libraries(solver_complete PRIVATE cnf)
+
 # ===== Solver on solution method ======
 set(SOURCES src/solver_solution.cpp)
 add_executable(solver_solution ${SOURCES})
