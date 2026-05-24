@@ -3,7 +3,7 @@
 
 #include <cstddef>
 
-#include <methods/solution.hpp>  // state_t = std::vector<double>, deriv_t = std::function<void(...)>
+#include <methods/nbody.hpp>  // state_t = std::vector<double>, deriv_t = std::function<void(...)>
 
 enum class OdeMethod {
     Euler,

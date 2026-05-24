@@ -2,9 +2,12 @@
 #define HPP_METHODS_NBODY_
 
 #include <cnf/cnf.hpp>
-#include <methods/solution.hpp>
-
+#include <functional>
 #include <cstddef>
+
+using state_t = std::vector<double>;
+using deriv_t = std::function<void(const state_t&, state_t&)>;
+
 
 namespace nbody {
 
