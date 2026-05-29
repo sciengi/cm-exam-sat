@@ -22,7 +22,11 @@ struct Method {
 
     virtual void decode(const state_t& state, CNF::model& model) = 0;
 
+    virtual void Print(std::ostream& stream) const = 0;
+
     virtual ~Method() = default;
 };
+
+inline std::ostream& operator<<(std::ostream& stream, const Method& m) { m.Print(stream); return stream; }
 
 #endif

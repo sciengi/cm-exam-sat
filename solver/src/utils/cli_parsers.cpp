@@ -1,3 +1,4 @@
+#include <iomanip>
 #include <utils/cli_parsers.hpp>
 
 #include <stdexcept>
@@ -5,6 +6,14 @@
 #include <string_view>
 #include <getopt.h>
 
+
+std::ostream& Cli::operator<<(std::ostream& stream, const Cli::GeneralConfig& conf) {
+    return stream
+        << "initial_step=" << conf.initial_step        << ' '
+        << "max_step="     << conf.max_step            << ' '
+        << "log_every="    << conf.log_every           << ' '
+        << "target="       << std::quoted(conf.target); 
+}
 
 
 static std::unique_ptr<Method> _ParseSolutionMethod(int argc, char** argv) {

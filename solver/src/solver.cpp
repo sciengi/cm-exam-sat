@@ -28,12 +28,8 @@ int main(int argc, char** argv) {
     try {
         auto [conf, m] = Cli::Parse(argc, argv);
 
-        std::cout 
-            << conf.initial_step << '\n'
-            << conf.max_step     << '\n'
-            << conf.log_every    << '\n'
-            << conf.target       << '\n'
-            << std::endl;
+        std::cerr << PREFIX_INFO << " Solver config: " << conf << std::endl;
+        std::cerr << PREFIX_INFO << " Method config: " << *m   << std::endl;
 
     } catch(std::exception& e) {
         std::cerr << PREFIX_ERROR << ' ' << e.what() << std::endl;

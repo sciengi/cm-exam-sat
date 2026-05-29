@@ -17,6 +17,8 @@ struct SolutionMethod : public Method {
     deriv_t build_deriv(const CNF& cnf) override;
 
     void decode(const state_t& state, CNF::model& model) override;
+
+    void Print(std::ostream& stream) const override;
 };
 
 #endif

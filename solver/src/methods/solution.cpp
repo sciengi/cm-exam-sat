@@ -3,6 +3,22 @@
 #include <random>
 #include <cmath>
 
+
+
+void SolutionMethod::Print(std::ostream& stream) const {
+    stream 
+        << "SolutionMethod: " 
+        << this->alpha  << ' ' 
+        << this->beta   << ' '
+        << this->lambda << ' '
+        << this->mu; 
+}
+
+
+
+
+
+
 // TODO: localize state size
 
 

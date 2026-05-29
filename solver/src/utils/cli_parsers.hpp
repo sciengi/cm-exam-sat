@@ -17,6 +17,8 @@ namespace Cli {
         double initial_step;
     };
 
+    std::ostream& operator<<(std::ostream& stream, const Cli::GeneralConfig& conf);
+
     std::pair<GeneralConfig, std::unique_ptr<Method>> 
     Parse(int argc, char** argv);
 
