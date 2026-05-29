@@ -11,15 +11,13 @@ CACHE_TXT = "ground_truth.txt"
 BENCH_DIR = "bench/test/"
 OUTPUT_PARAMS_CSV = "optimized_physics_parameters.csv"
 
-# Диапазон под микро-КНФ
 DIMENSIONS = ["uf3", "uf5", "uf7", "uf9", "uf10", "uf12", "uf15", "uf20"]
 FILES_PER_DIM = 20
 
-# Тестируемые методы численной интеграции
 METHODS_TO_TEST = ["RK4", "DP8", "Leapfrog", "DP8Adaptive"]
 
 # ЖЕСТКИЙ ТАЙМАУТ на один запуск ГА (в секундах)
-# Если C++ зависнет из-за сингулярности, Python убьет его через 20 сек.
+# Если C++ зависнет из-за сингулярности, Python убьет его через TASK_TIMEOUT сек.
 TASK_TIMEOUT = 180.0 
 # =====================================================
 
@@ -27,14 +25,12 @@ def run_ga_for_file(task_args):
     filepath, method = task_args
     filename = os.path.basename(filepath)
     
-    # Сразу пишем в консоль, что задача пошла в работу
     print(f"[{datetime.now().strftime('%H:%M:%S')}] [START] {filename} | Метод: {method}")
     
     cmd = [RESEARCH_BIN, "--file", filepath, "--cache", CACHE_TXT, "--method", method]
     start_time = datetime.now()
     
     try:
-        # Запускаем с ограничением времени выполнения timeout
         result = subprocess.run(cmd, capture_output=True, text=True, check=True, timeout=TASK_TIMEOUT)
         elapsed = (datetime.now() - start_time).total_seconds()
         
@@ -56,7 +52,6 @@ def main():
     print(f"[{datetime.now()}] Сканирование папок КНФ...")
     tasks = []
     for dim in DIMENSIONS:
-        # Ищем строго файлы нужной размерности, добавляя дефис (например, "uf5-")
         pattern = os.path.join(BENCH_DIR, f"{dim}-*.cnf")
         files = glob.glob(pattern)[:FILES_PER_DIM]
         for f in files:
@@ -70,7 +65,6 @@ def main():
         print(f"[ERR] Файл {CACHE_TXT} не найден в корне проекта. Отмена.")
         return
 
-    # Открываем CSV и пишем шапку
     with open(OUTPUT_PARAMS_CSV, mode='w', newline='') as f:
         writer = csv.writer(f)
         writer.writerow(["Filepath", "L", "OdeMethod", "GA_Time_Seconds", "c_att", "c_opp", "c_clause", "gamma"])

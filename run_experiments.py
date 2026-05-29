@@ -11,14 +11,11 @@ BENCH_DIR = "bench/test/"
 PARAMS_CSV = "final_class_parameters.csv"
 OUTPUT_CSV = "final_validation_results.csv"
 
-# Точный компактный ряд микро-КНФ
 DIMENSIONS = ["uf3", "uf5", "uf7", "uf9", "uf10", "uf12", "uf15", "uf20"]
-FILES_PER_DIM = 10  # По 10 файлов для плавной и красивой статистики
+FILES_PER_DIM = 10 
 
-# Исследуемые физические режимы (количество законов)
 LAWS_MODES = [1, 2, 3]
 
-# Численные методы интегрирования ОДУ
 METHODS = ["RK4", "DP8", "Leapfrog", "DP8Adaptive"]
 
 # Таймаут на одну симуляцию (в секундах)
@@ -47,7 +44,6 @@ def run_single_task(task_args):
     filepath, laws, method, p = task_args
     filename = os.path.basename(filepath)
     
-    # Формируем команду CLI, передавая персональные коэффициенты для этой размерности
     cmd = [
         SOLVER_BIN, 
         "--file", filepath, 
@@ -62,10 +58,8 @@ def run_single_task(task_args):
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, check=True, timeout=TASK_TIMEOUT)
         output_line = result.stdout.strip()
-        # Возвращаем строчку, дополненную типом метода ОДУ
         return f"{output_line},{method}"
     except subprocess.TimeoutExpired:
-        # В случае таймаута возвращаем маркер неуспеха: Is_Solved=0, Attempts=5
         l_extracted = filename.split('-')[0].replace('uf', '')
         return f"0,{filepath},{l_extracted},{laws},5,{TASK_TIMEOUT},{method}"
     except subprocess.CalledProcessError:
@@ -87,7 +81,6 @@ def main():
         if not p:
             continue
             
-        # Добавляем дефис, чтобы жестко разграничить uf5 и uf50
         pattern = os.path.join(BENCH_DIR, f"{dim}-*.cnf")
         files = glob.glob(pattern)[:FILES_PER_DIM]
         

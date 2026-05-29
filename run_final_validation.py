@@ -48,10 +48,8 @@ def run_single_task(task_args):
         result = subprocess.run(cmd, capture_output=True, text=True, check=True, timeout=TASK_TIMEOUT)
         output_line = result.stdout.strip()
         # C++ вернул: Is_Solved,Filepath,L,Laws,Attempts,Time,Sat_Clauses,Total_Clauses
-        # Дописываем в конец название метода интегрирования
         return f"{output_line},{method}"
     except Exception:
-        # В случае сбоя или таймаута пишем аварийную строчку (0 выполненных дизъюнктов)
         l_extracted = filename.split('-')[0].replace('uf', '')
         return f"0,{filepath},{l_extracted},{laws},5,{TASK_TIMEOUT},0,100,{method}"
 
@@ -78,7 +76,6 @@ def main():
 
     with open(OUTPUT_CSV, mode='w', newline='') as f:
         writer = csv.writer(f)
-        # Добавились новые столбцы: Sat_Clauses и Total_Clauses
         writer.writerow(["Is_Solved", "Filepath", "Variables_L", "Laws_Count", "Attempts", "Time_Seconds", "Sat_Clauses", "Total_Clauses", "OdeMethod"])
 
     print("Запуск пула валидации...\n")
