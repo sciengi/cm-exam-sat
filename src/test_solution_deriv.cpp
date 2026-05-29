@@ -1,6 +1,6 @@
 
 #include <cnf/cnf.hpp>
-#include <methods/solution.hpp>
+#include <methods/nbody.hpp>
 #include <numeric/ode.hpp>
 
 #include <string>
@@ -40,9 +40,3 @@ int main() {
     for (size_t i = 0; i < state_deriv.size() - 1; i++) std::cout << state_deriv[i] << ' ';
     std::cout << state_deriv.back() << std::endl;
 }
-
-
-
-
-
-

@@ -1,6 +1,7 @@
 #pragma once
-#include "cnf/cnf.hpp"           
-#include "methods/nbody.hpp"     
+#include <cnf/cnf.hpp>           
+#include <methods/nbody.hpp>     
+#include <numeric/ode.hpp>
 #include <vector>
 #include <string>
 #include <cmath>
@@ -13,6 +14,7 @@
 #include <unordered_map>
 #include <fstream>
 #include <sstream>
+#include <filesystem>
 
 struct PhysicsParams {
     double gravity_coef;      
@@ -21,12 +23,6 @@ struct PhysicsParams {
     double friction;          
 };
 
-struct StatResult {
-    double mean;
-    double variance;
-};
-
-// ЭТАП 1: Мгновенное чтение Ground Truth из подготовленного датасета
 class Stage1DiscreteSolver {
 private:
     static inline std::unordered_map<std::string, CNF::model> cache;
@@ -36,8 +32,7 @@ public:
     static void load_cache(const std::string& cache_filepath) {
         std::ifstream file(cache_filepath);
         if (!file.is_open()) {
-            std::cout << "[ERR] Не удалось открыть файл с эталонами: " << cache_filepath << "\n";
-            std::cout << "[I] Убедитесь, что запустили prepare_dataset.py\n";
+            std::cerr << "[ERR] Не удалось открыть файл с эталонами: " << cache_filepath << "\n";
             return;
         }
 
@@ -53,168 +48,146 @@ public:
             }
         }
         is_loaded = true;
-        std::cout << "[I] Кэш эталонов успешно загружен. Записей: " << cache.size() << "\n";
     }
 
     static std::optional<CNF::model> get_ground_truth(const std::string& filepath) {
-        if (!is_loaded) {
-            // Ожидается, что программа запускается из папки build/
-            load_cache("../bench/test/ground_truth.txt"); 
-        }
-
-        size_t slash_pos = filepath.find_last_of("/\\");
-        std::string filename = (slash_pos == std::string::npos) ? filepath : filepath.substr(slash_pos + 1);
-
-        if (cache.contains(filename)) {
-            return cache[filename];
-        }
+        if (!is_loaded) return std::nullopt;
         
-        return std::nullopt; 
+        std::filesystem::path p(filepath);
+        std::string filename = p.filename().string();
+        
+        auto it = cache.find(filename);
+        if (it != cache.end()) {
+            return it->second;
+        }
+        return std::nullopt;
     }
 };
 
-// ЭТАП 2: Генетический алгоритм
 class GeneticOptimizer {
 private:
-    static size_t calculate_hamming_distance(const CNF::model& v1, const CNF::model& v2) {
-        size_t dist = 0;
-        for (size_t i = 0; i < v1.size(); ++i) {
-            if (v1[i] != v2[i]) dist++;
+    static inline double calculate_hamming_distance(const CNF::model& m1, const CNF::model& m2) {
+        if (m1.size() != m2.size()) return static_cast<double>(std::max(m1.size(), m2.size()));
+        double dist = 0.0;
+        for (size_t i = 0; i < m1.size(); ++i) {
+            if (m1[i] != m2[i]) dist += 1.0;
         }
         return dist;
     }
 
-public:
-    // Обновленная функция оценки параметров с ограниченным мультизапуском
-    static double evaluate_fitness(const CNF& cnf, 
-                                   const CNF::model& ground_truth, 
-                                   const PhysicsParams& params) 
-    {
-        nbody::NBodyParams nbody_p;
-        nbody_p.dim = 3; 
-        nbody_p.c_att = params.gravity_coef;
-        nbody_p.c_opp = params.repulsion_coef;
-        nbody_p.c_clause = params.clause_repulsion;
-        nbody_p.gamma = params.friction;
-        nbody_p.eps = 1e-2;
+    static double evaluate_fitness(const CNF& cnf, const CNF::model& ground_truth, const PhysicsParams& p, OdeMethod method) {
+        nbody::NBodyParams params;
+        params.dim = 3;
+        params.c_att = p.gravity_coef;
+        params.c_opp = p.repulsion_coef;
+        params.c_clause = p.clause_repulsion;
+        params.gamma = p.friction;
+        params.eps = 1e-2;
 
-        // Ограничиваем мультизапуск в исследовании (например, 5 попыток),
-        // чтобы алгоритм не работал слишком долго.
-        const int MAX_RESEARCH_RESTARTS = 5; 
-        double best_fitness_across_restarts = 0.0;
+        double dt = 0.01;
+        size_t max_steps = 600;
 
-        for (int restart = 0; restart < MAX_RESEARCH_RESTARTS; ++restart) {
-            // Используем переменную restart как уникальный seed для каждой попытки
-            state_t state = nbody::init_state(cnf.variable_count(), nbody_p, restart);
-            deriv_t deriv = nbody::build_deriv(cnf, nbody_p);
+        state_t state = nbody::init_state(cnf.variable_count(), params, 42);
+        deriv_t deriv = nbody::build_deriv(cnf, params);
+        
+        some_ode_solver solver(state.size(), dt, method);
+        if (method == OdeMethod::DP8Adaptive) {
+            solver.set_tolerances(1e-4, 1e-6);
+        }
+        double t = 0.0;
 
-            double dt = 0.01;
-            size_t max_steps = 400; 
-            state_t dst(state.size(), 0.0);
+        size_t best_satisfied = 0;
+        double min_hamming = static_cast<double>(cnf.variable_count());
 
-            for (size_t step = 0; step < max_steps; ++step) {
-                deriv(state, dst); 
-                for (size_t i = 0; i < state.size(); ++i) {
-                    state[i] += dst[i] * dt; 
-                }
-            }
+        for (size_t step = 0; step < max_steps; ++step) {
+            solver.step(state, t, deriv);
 
-            nbody::DecodeResult decode_res = nbody::decode_best(cnf, state, nbody_p);
-            
-            if (!decode_res.decoded) continue; 
-
-            // Считаем качество текущей попытки
-            size_t distance = calculate_hamming_distance(decode_res.model, ground_truth);
-            double current_fitness = 1.0 / (static_cast<double>(distance) + 1.0);
-            current_fitness += static_cast<double>(decode_res.satisfied) / cnf.clause_count();
-
-            // Если эта попытка оказалась лучшей, запоминаем её
-            if (current_fitness > best_fitness_across_restarts) {
-                best_fitness_across_restarts = current_fitness;
-            }
-
-            // ЕСЛИ ФИЗИКА НАШЛА ПОЛНОЕ РЕШЕНИЕ (SAT), прерываем мультизапуск досрочно!
-            // Зачем тратить время на оставшиеся попытки, если параметры уже доказали свою идеальность?
-            if (decode_res.sat) {
+            // Предохранитель от взрыва ОДУ (NaN / Inf)
+            if (!state.empty() && (!std::isfinite(state[0]) || !std::isfinite(state[state.size() / 2]))) {
                 break; 
+            }
+
+            if (step % 20 == 0) {
+                nbody::DecodeResult decoded = nbody::decode_best(cnf, state, params);
+                
+                if (decoded.sat) {
+                    return 15.0 + (max_steps - step); // Весомый бонус за полный SAT
+                }
+
+                if (decoded.satisfied > best_satisfied) {
+                    best_satisfied = decoded.satisfied;
+                    min_hamming = calculate_hamming_distance(decoded.model, ground_truth);
+                }
             }
         }
 
-        return best_fitness_across_restarts;
+        double part_sat = static_cast<double>(best_satisfied) / cnf.clause_count();
+        double part_hamming = 1.0 / (min_hamming + 1.0);
+        return part_sat + part_hamming;
     }
 
-    static PhysicsParams optimize_parameters(const CNF& cnf, const CNF::model& ground_truth) {
-        std::mt19937 gen(std::random_device{}());
-        std::uniform_real_distribution<double> dist_param(0.05, 3.0);
-
-        const int POPULATION_SIZE = 15;
+public:
+    static PhysicsParams optimize_parameters(const CNF& cnf, const CNF::model& ground_truth, OdeMethod method) {
+        const int POPULATION_SIZE = 20;
         const int GENERATIONS = 6;
         
+        std::mt19937 gen(std::chrono::steady_clock::now().time_since_epoch().count());
+        
+        // СУЖЕННЫЕ КОМПАКТНЫЕ ДИАПАЗОНЫ ДЛЯ СВЕРХМАЛЫХ КНФ (L <= 20)
+        std::uniform_real_distribution<double> dist_gravity(0.01, 1.2);
+        std::uniform_real_distribution<double> dist_repulsion(0.1, 4.0);
+        std::uniform_real_distribution<double> dist_clause(0.1, 4.0);
+        std::uniform_real_distribution<double> dist_friction(0.1, 3.0);
+
         std::vector<PhysicsParams> population(POPULATION_SIZE);
         for (auto& ind : population) {
-            ind = { dist_param(gen), dist_param(gen), dist_param(gen), dist_param(gen) };
+            ind.gravity_coef = dist_gravity(gen);
+            ind.repulsion_coef = dist_repulsion(gen);
+            ind.clause_repulsion = dist_clause(gen);
+            ind.friction = dist_friction(gen);
         }
 
         for (int g = 0; g < GENERATIONS; ++g) {
-            std::vector<std::pair<double, PhysicsParams>> ranked_pop;
+            std::vector<std::pair<double, PhysicsParams>> scored_pop;
             for (const auto& ind : population) {
-                double fit = evaluate_fitness(cnf, ground_truth, ind);
-                ranked_pop.push_back({fit, ind});
+                double score = evaluate_fitness(cnf, ground_truth, ind, method);
+                scored_pop.push_back({score, ind});
             }
 
-            std::sort(ranked_pop.begin(), ranked_pop.end(), [](const auto& a, const auto& b){
+            std::sort(scored_pop.begin(), scored_pop.end(), [](const auto& a, const auto& b) {
                 return a.first > b.first;
             });
 
-            std::vector<PhysicsParams> next_gen;
-            for (int i = 0; i < 4; ++i) next_gen.push_back(ranked_pop[i].second);
-
-            while (next_gen.size() < POPULATION_SIZE) {
-                int p1 = gen() % 4, p2 = gen() % 4;
-                PhysicsParams child {
-                    (ranked_pop[p1].second.gravity_coef + ranked_pop[p2].second.gravity_coef) / 2.0,
-                    (ranked_pop[p1].second.repulsion_coef + ranked_pop[p2].second.repulsion_coef) / 2.0,
-                    (ranked_pop[p1].second.clause_repulsion + ranked_pop[p2].second.clause_repulsion) / 2.0,
-                    (ranked_pop[p1].second.friction + ranked_pop[p2].second.friction) / 2.0
-                };
-                if (dist_param(gen) > 2.5) child.gravity_coef += dist_param(gen) * 0.05;
-                next_gen.push_back(child);
+            std::vector<PhysicsParams> parents;
+            for (int i = 0; i < 4; ++i) {
+                parents.push_back(scored_pop[i].second);
             }
-            population = std::move(next_gen);
+
+            population.clear();
+            population.push_back(parents[0]); // Сохраняем элиту
+
+            std::uniform_int_distribution<int> parent_dist(0, parents.size() - 1);
+            std::uniform_real_distribution<double> mutate_prob(0.0, 1.0);
+            std::normal_distribution<double> mutation_delta(0.0, 0.1);
+
+            while (population.size() < POPULATION_SIZE) {
+                const auto& p1 = parents[parent_dist(gen)];
+                const auto& p2 = parents[parent_dist(gen)];
+
+                PhysicsParams child;
+                child.gravity_coef = (p1.gravity_coef + p2.gravity_coef) / 2.0;
+                child.repulsion_coef = (p1.repulsion_coef + p2.repulsion_coef) / 2.0;
+                child.clause_repulsion = (p1.clause_repulsion + p2.clause_repulsion) / 2.0;
+                child.friction = (p1.friction + p2.friction) / 2.0;
+
+                if (mutate_prob(gen) < 0.2) child.gravity_coef = std::clamp(child.gravity_coef + mutation_delta(gen), 0.01, 1.2);
+                if (mutate_prob(gen) < 0.2) child.repulsion_coef = std::clamp(child.repulsion_coef + mutation_delta(gen), 0.1, 4.0);
+                if (mutate_prob(gen) < 0.2) child.clause_repulsion = std::clamp(child.clause_repulsion + mutation_delta(gen), 0.1, 4.0);
+                if (mutate_prob(gen) < 0.2) child.friction = std::clamp(child.friction + mutation_delta(gen), 0.1, 3.0);
+
+                population.push_back(child);
+            }
         }
         return population[0];
-    }
-};
-
-class StatsAccumulator {
-public:
-    static StatResult calculate_stats(const std::vector<double>& values) {
-        if (values.empty()) return {0.0, 0.0};
-        double sum = std::accumulate(values.begin(), values.end(), 0.0);
-        double mean = sum / values.size();
-        double sq_sum = 0.0;
-        for (double val : values) sq_sum += (val - mean) * (val - mean);
-        double variance = values.size() > 1 ? sq_sum / (values.size() - 1) : 0.0;
-        return {mean, variance};
-    }
-
-    static void print_report(const std::string& class_name, const std::vector<PhysicsParams>& sample) {
-        std::vector<double> gravs, repuls, cls, frics;
-        for (const auto& p : sample) {
-            gravs.push_back(p.gravity_coef);
-            repuls.push_back(p.repulsion_coef);
-            cls.push_back(p.clause_repulsion);
-            frics.push_back(p.friction);
-        }
-        auto g_stat = calculate_stats(gravs);
-        auto r_stat = calculate_stats(repuls);
-        auto c_stat = calculate_stats(cls);
-        auto f_stat = calculate_stats(frics);
-
-        std::cout << "=== СТАТИСТИКА КЛАССА КНФ: " << class_name << " ===\n";
-        std::cout << "[STAT] Gravity (c_att): M = " << g_stat.mean << ", Var = " << g_stat.variance << "\n";
-        std::cout << "[STAT] Repulsion(c_opp): M = " << r_stat.mean << ", Var = " << r_stat.variance << "\n";
-        std::cout << "[STAT] Clause (c_clau): M = " << c_stat.mean << ", Var = " << c_stat.variance << "\n";
-        std::cout << "[STAT] Friction (gamma): M = " << f_stat.mean << ", Var = " << f_stat.variance << "\n\n";
     }
 };

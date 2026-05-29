@@ -3,90 +3,67 @@
 #include <iostream>
 #include <vector>
 #include <string>
-#include <filesystem>
 
-namespace fs = std::filesystem;
+std::string get_cmd_option(const std::vector<std::string>& args, const std::string& option) {
+    for (size_t i = 0; i < args.size() - 1; ++i) {
+        if (args[i] == option) {
+            return args[i + 1];
+        }
+    }
+    return "";
+}
 
-int main() {
-    std::cout << "[I] Запуск автоматизированного исследовательского стенда...\n";
+int main(int argc, char* argv[]) {
+    std::vector<std::string> args(argv, argv + argc);
 
-    std::string target_dir = "../bench/test/";
-    
-    // Список размерностей, которые мы хотим исследовать за один запуск
-    std::vector<std::string> prefixes_to_test = {"uf50", "uf75", "uf100"};
-    
-    // Ограничиваем выборку 10 файлами на каждый размер, чтобы не ждать вечность
-    const int max_files_to_test = 10; 
+    std::string filepath = get_cmd_option(args, "--file");
+    std::string cache_path = get_cmd_option(args, "--cache");
+    std::string method_str = get_cmd_option(args, "--method");
 
-    // Проверка существования папки
-    if (!fs::exists(target_dir)) {
-        std::cout << "[ERR] Папка " << target_dir << " не найдена!\n";
+    if (filepath.empty() || cache_path.empty() || method_str.empty()) {
+        std::cerr << "Usage: " << argv[0] << " --file <cnf_path> --cache <ground_truth_path> --method <RK4|DP8|Leapfrog|DP8Adaptive>\n";
         return 1;
     }
 
-    // Главный цикл по разным классам сложности
-    for (const auto& target_prefix : prefixes_to_test) {
-        std::cout << "\n======================================================\n";
-        std::cout << "[I] НАЧАЛО АНАЛИЗА КЛАССА: " << target_prefix << "\n";
-        std::cout << "======================================================\n";
+    OdeMethod method = OdeMethod::RK4;
+    if (method_str == "Euler") method = OdeMethod::Euler;
+    else if (method_str == "Leapfrog") method = OdeMethod::Leapfrog;
+    else if (method_str == "DP8") method = OdeMethod::DP8;
+    else if (method_str == "DP8Adaptive") method = OdeMethod::DP8Adaptive;
 
-        std::vector<std::string> test_files;
-        int count = 0;
+    try {
+        Stage1DiscreteSolver::load_cache(cache_path);
 
-        // Ищем нужные файлы для текущего префикса
-        for (const auto& entry : fs::directory_iterator(target_dir)) {
-            std::string filename = entry.path().filename().string();
-            // Ищем точное совпадение начала имени (например, uf75)
-            if (entry.path().extension() == ".cnf" && filename.find(target_prefix) == 0) {
-                test_files.push_back(entry.path().string());
-                if (++count >= max_files_to_test) break;
-            }
+        CNF cnf_formula(filepath);
+        auto ground_truth = Stage1DiscreteSolver::get_ground_truth(filepath);
+
+        if (!ground_truth.has_value()) {
+            std::cerr << "[ERR] Эталон решения для " << filepath << " не найден в кэше!\n";
+            return 1;
         }
 
-        if (test_files.empty()) {
-            std::cout << "[ERR] Файлы для " << target_prefix << " не найдены. Пропускаем.\n";
-            continue;
-        }
+        // Замеряем время работы ГА
+        auto start = std::chrono::high_resolution_clock::now();
+        PhysicsParams optimized = GeneticOptimizer::optimize_parameters(cnf_formula, ground_truth.value(), method);
+        auto end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> duration = end - start;
 
-        std::cout << "[I] Найдено файлов: " << test_files.size() << "\n";
-        std::vector<PhysicsParams> successful_params_sample;
+        // Выводим структурированный CSV лог: 
+        // МАРКЕР, ПУТЬ, L, МЕТОД, ВРЕМЯ_ГА, C_ATT, C_OPP, C_CLAUSE, GAMMA
+        std::cout << "SUCCESS_PARAM,"
+                  << filepath << ","
+                  << cnf_formula.variable_count() << ","
+                  << method_str << ","
+                  << duration.count() << ","
+                  << optimized.gravity_coef << ","
+                  << optimized.repulsion_coef << ","
+                  << optimized.clause_repulsion << ","
+                  << optimized.friction << "\n";
 
-        for (const auto& filepath : test_files) {
-            std::cout << "[I]--------------------------------------------------\n";
-            std::cout << "[I] Обработка: " << filepath << "\n";
-            
-            try {
-                CNF cnf_formula(filepath);
-                
-                // Берем ответ из кэша, созданного Python
-                auto ground_truth = Stage1DiscreteSolver::get_ground_truth(filepath);
-
-                if (!ground_truth.has_value()) {
-                    std::cout << "[ERR] Пропуск: Эталон не найден в кэше.\n";
-                    continue;
-                }
-                
-                // 3 прогона на один файл для точной статистики
-                const int RUNS_PER_CNF = 3; 
-                for (int r = 0; r < RUNS_PER_CNF; ++r) {
-                    PhysicsParams optimized = GeneticOptimizer::optimize_parameters(cnf_formula, ground_truth.value());
-                    successful_params_sample.push_back(optimized);
-                }
-
-            } catch (const std::exception& ex) {
-                std::cout << "[ERR] Ошибка при обработке: " << ex.what() << "\n";
-            }
-        }
-
-        // Вывод итоговой статистики для текущего класса
-        std::cout << "[I]--------------------------------------------------\n";
-        if (!successful_params_sample.empty()) {
-            StatsAccumulator::print_report("Benchmark-Class-" + target_prefix, successful_params_sample);
-        } else {
-            std::cout << "[ERR] Нет данных для отчета по " << target_prefix << "\n";
-        }
+    } catch (const std::exception& ex) {
+        std::cerr << "[ERR] Исключение: " << ex.what() << "\n";
+        return 1;
     }
 
-    std::cout << "\n[I] Все классы успешно исследованы!\n";
     return 0;
 }

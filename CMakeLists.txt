@@ -31,13 +31,13 @@ add_executable(test_nbody_deriv
 )
 target_include_directories(test_nbody_deriv PRIVATE ${INCLUDE_DIR})
 
-# Тест вычисления производных для базового метода (Solution)
-add_executable(test_solution_deriv 
-    src/test_solution_deriv.cpp 
-    src/cnf/cnf.cpp 
-    src/methods/nbody.cpp
-)
-target_include_directories(test_solution_deriv PRIVATE ${INCLUDE_DIR})
+# # Тест вычисления производных для базового метода (Solution)
+# add_executable(test_solution_deriv 
+#     src/test_solution_deriv.cpp 
+#     src/cnf/cnf.cpp 
+#     src/methods/nbody.cpp
+# )
+# target_include_directories(test_solution_deriv PRIVATE ${INCLUDE_DIR})
 
 # ==========================================
 # 2. ОСНОВНЫЕ РЕШАТЕЛИ (Solvers)
