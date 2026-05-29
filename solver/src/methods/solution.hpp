@@ -12,11 +12,13 @@ struct SolutionMethod : public Method {
     double lambda;
     double mu;
 
-    state_t init_state(size_t variable_count) override;
+    state_t InitState(size_t variable_count) override;
 
-    deriv_t build_deriv(const CNF& cnf) override;
+    deriv_t BuildDeriv(const CNF& cnf) override;
 
-    void decode(const state_t& state, CNF::model& model) override;
+    bool PostProcessState(state_t& state) override;
+
+    void Decode(const state_t& state, CNF::model& model) override;
 
     void Print(std::ostream& stream) const override;
 };

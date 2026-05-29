@@ -6,6 +6,10 @@
 
 #include <methods/methods.hpp>
 
+/* TODO:
+ * - Add flag for ODE solver ant its params
+ * - Make specification about help msg (add --help flags)
+ */
 
 
 namespace Cli {
@@ -13,6 +17,7 @@ namespace Cli {
     struct GeneralConfig {
         std::string target;
         size_t log_every;
+        size_t decode_every;
         size_t max_step;
         double initial_step;
     };

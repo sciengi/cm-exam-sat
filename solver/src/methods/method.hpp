@@ -16,17 +16,19 @@ struct Method {
 
     // WARN: fields must be filled (for example by `Cli::Parse`) before any call to struct methods
 
-    virtual state_t init_state(size_t variable_count) = 0;
+    virtual state_t InitState(size_t variable_count) = 0;
 
-    virtual deriv_t build_deriv(const CNF& cnf) = 0;
+    virtual deriv_t BuildDeriv(const CNF& cnf) = 0;
 
-    virtual void decode(const state_t& state, CNF::model& model) = 0;
+    virtual bool PostProcessState(state_t& state);
+
+    virtual void Decode(const state_t& state, CNF::model& model) = 0;
 
     virtual void Print(std::ostream& stream) const = 0;
 
     virtual ~Method() = default;
 };
 
-inline std::ostream& operator<<(std::ostream& stream, const Method& m) { m.Print(stream); return stream; }
+std::ostream& operator<<(std::ostream& stream, const Method& m); 
 
 #endif

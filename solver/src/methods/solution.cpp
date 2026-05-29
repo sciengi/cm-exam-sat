@@ -15,12 +15,17 @@ void SolutionMethod::Print(std::ostream& stream) const {
 }
 
 
+bool SolutionMethod::PostProcessState(state_t& state) {
+    for (double& x : state) {
+        if (!std::isfinite(x)) return true;
+        if (x < 0.0) x = 0.0;
+    }
 
-
+    return false;
+};
 
 
 // TODO: localize state size
-
 
 
 static size_t literal_to_state_index(int lit, std::size_t L) {
@@ -32,7 +37,7 @@ static size_t literal_to_state_index(int lit, std::size_t L) {
 }
 
 
-state_t SolutionMethod::init_state(size_t variable_count) {
+state_t SolutionMethod::InitState(size_t variable_count) {
 
     state_t state(2 * variable_count);
 
@@ -48,7 +53,7 @@ state_t SolutionMethod::init_state(size_t variable_count) {
 }
 
 
-deriv_t SolutionMethod::build_deriv(const CNF& cnf) {
+deriv_t SolutionMethod::BuildDeriv(const CNF& cnf) {
 
     const size_t L = cnf.variable_count();
     const size_t N = cnf.clause_count();
@@ -108,7 +113,7 @@ deriv_t SolutionMethod::build_deriv(const CNF& cnf) {
 }
 
 
-void SolutionMethod::decode(const state_t& state, CNF::model& model) {
+void SolutionMethod::Decode(const state_t& state, CNF::model& model) {
     size_t offset = state.size() / 2;
     for (size_t i = 0; i < model.size(); i++) {
         model[i] = state[i] < state[i + offset];

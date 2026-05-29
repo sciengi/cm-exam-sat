@@ -12,6 +12,7 @@ std::ostream& Cli::operator<<(std::ostream& stream, const Cli::GeneralConfig& co
         << "initial_step=" << conf.initial_step        << ' '
         << "max_step="     << conf.max_step            << ' '
         << "log_every="    << conf.log_every           << ' '
+        << "decode_every=" << conf.decode_every        << ' '
         << "target="       << std::quoted(conf.target); 
 }
 
@@ -44,6 +45,7 @@ Cli::Parse(int argc, char** argv) {
     GeneralConfig conf = {
         .target       = "",     // -t
         .log_every    = 1,      // -f
+        .decode_every = 1,      // -d 
         .max_step     = 1'000,  // -M
         .initial_step = 1e-3    // -i
     };
@@ -59,7 +61,7 @@ Cli::Parse(int argc, char** argv) {
     
     int opt;
     opterr = 0;
-    while ((opt = getopt(argc, argv, ":t:f:M:i:m:")) != -1 && !method_parsed) {
+    while ((opt = getopt(argc, argv, ":t:f:d:M:i:m:")) != -1 && !method_parsed) {
         switch (opt) {
             case 't':
                 conf.target = optarg;
@@ -70,6 +72,13 @@ Cli::Parse(int argc, char** argv) {
                 if (li_var < 0) throw std::invalid_argument("log frequency cant be negative");
                 conf.log_every = static_cast<size_t>(li_var);
                 break;
+
+            case 'd':
+                li_var = std::stol(optarg);
+                if (li_var < 0) throw std::invalid_argument("decode frequency cant be negative");
+                conf.decode_every = static_cast<size_t>(li_var);
+                break;
+
 
             case 'M':
                 li_var = std::stol(optarg);
