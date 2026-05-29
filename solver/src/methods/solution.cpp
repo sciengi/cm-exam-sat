@@ -16,7 +16,7 @@ static size_t literal_to_state_index(int lit, std::size_t L) {
 }
 
 
-state_t init_state(size_t variable_count) {
+state_t SolutionMethod::init_state(size_t variable_count) {
 
     state_t state(2 * variable_count);
 
@@ -32,7 +32,7 @@ state_t init_state(size_t variable_count) {
 }
 
 
-deriv_t build_deriv(const CNF& cnf, double alpha, double beta, double lambda, double mu) {
+deriv_t SolutionMethod::build_deriv(const CNF& cnf) {
 
     const size_t L = cnf.variable_count();
     const size_t N = cnf.clause_count();
@@ -56,8 +56,7 @@ deriv_t build_deriv(const CNF& cnf, double alpha, double beta, double lambda, do
 
     return [
         &cnf,
-        alpha, beta, 
-        lambda, mu,
+        this,
         L, N,
         pairs   = std::move(pairs),
         triples = std::move(triples),
@@ -93,7 +92,7 @@ deriv_t build_deriv(const CNF& cnf, double alpha, double beta, double lambda, do
 }
 
 
-void decode(const state_t& state, CNF::model& model) {
+void SolutionMethod::decode(const state_t& state, CNF::model& model) {
     size_t offset = state.size() / 2;
     for (size_t i = 0; i < model.size(); i++) {
         model[i] = state[i] < state[i + offset];

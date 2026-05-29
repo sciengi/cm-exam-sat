@@ -33,33 +33,17 @@ set(SOURCES src/methods/nbody.cpp)
 add_library(method_nbody STATIC ${SOURCES})
 target_include_directories(method_nbody PUBLIC src/methods/)
 
-# ===== CNF test =======================
-set(SOURCES src/test_cnf.cpp)
-add_executable(test_cnf ${SOURCES})
-target_link_libraries(test_cnf PRIVATE cnf)
+# ===== Solver random ==================
+set(SOURCES src/solver_random.cpp)
+add_executable(solver_random ${SOURCES})
+target_link_libraries(solver_random PRIVATE cnf)
 
-# ===== Solution method deriv test =====
-set(SOURCES src/test_solution_deriv.cpp)
-add_executable(test_solution_deriv ${SOURCES})
-target_link_libraries(test_solution_deriv PRIVATE cnf method_solution)
-
-# ===== NBody method deriv test ========
-set(SOURCES src/test_nbody_deriv.cpp)
-add_executable(test_nbody_deriv ${SOURCES})
-target_link_libraries(test_nbody_deriv PRIVATE cnf method_nbody)
-
-# ===== Solver on nbody method =========
+# ===== Solver complete ================
 set(SOURCES src/solver_complete.cpp)
 add_executable(solver_complete ${SOURCES})
 target_link_libraries(solver_complete PRIVATE cnf)
 
-# ===== Solver on solution method ======
-set(SOURCES src/solver_solution.cpp)
-add_executable(solver_solution ${SOURCES})
-target_link_libraries(solver_solution PRIVATE cnf ode method_solution)
-
-# ===== Solver on nbody method =========
-set(SOURCES src/solver_nbody.cpp)
-add_executable(solver_nbody ${SOURCES})
-target_link_libraries(solver_nbody PRIVATE cnf ode method_nbody)
-
+# ===== Solver =========================
+set(SOURCES src/solver.cpp src/utils/cli_parsers.cpp)
+add_executable(solver ${SOURCES})
+target_link_libraries(solver PRIVATE ode method_solution method_nbody cnf)  # BUG: ld cant find cnf lib if it first
