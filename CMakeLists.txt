@@ -62,7 +62,7 @@ add_executable(research_bench
     src/research/research_main.cpp 
     src/cnf/cnf.cpp 
     src/methods/nbody.cpp 
-    src/methods/nbody.cpp 
+    src/methods/canonical_nbody.cpp
     src/numeric/ode.cpp
 )
 target_include_directories(research_bench PRIVATE ${INCLUDE_DIR})
