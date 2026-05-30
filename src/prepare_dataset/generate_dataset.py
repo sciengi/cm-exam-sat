@@ -4,7 +4,6 @@ import shutil
 from pysat.solvers import Minisat22
 from pysat.formula import CNF as SatCNF
 
-# ================= НАСТРОЙКИ СВЕЖЕГО СТАРТА =================
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 BENCH_DIR = os.path.join(ROOT_DIR, "bench", "test")
 GROUND_TRUTH_FILE = os.path.join(ROOT_DIR, "ground_truth.txt")
@@ -15,7 +14,6 @@ FILES_PER_DIM = 100  # По 100 штук на каждый класс
 
 # Асимптотический коэффициент максимальной сложности (для L >= 6)
 ALPHA = 4.3
-# ============================================================
 
 def clear_old_garbage():
     """Полностью стирает старые файлы бенчмарков и кэш эталонов для порядка"""
