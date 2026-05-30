@@ -18,7 +18,7 @@ set(INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 # Тест парсера КНФ
 add_executable(test_cnf 
-    src/test_cnf.cpp 
+    src/cnf/test_cnf.cpp 
     src/cnf/cnf.cpp
 )
 target_include_directories(test_cnf PRIVATE ${INCLUDE_DIR})
@@ -48,6 +48,7 @@ add_executable(solver_nbody
     src/solver_nbody.cpp 
     src/cnf/cnf.cpp 
     src/methods/nbody.cpp 
+    src/methods/canonical_nbody.cpp
     src/numeric/ode.cpp
 )
 target_include_directories(solver_nbody PRIVATE ${INCLUDE_DIR})

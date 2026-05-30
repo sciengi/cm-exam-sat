@@ -6,7 +6,6 @@
 #include <cnf/cnf.hpp>
 
 
-
 const size_t MAX_TRY_COUNT = 10000;
 
 int main() {
