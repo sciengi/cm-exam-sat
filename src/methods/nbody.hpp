@@ -12,7 +12,6 @@ using deriv_t = std::function<void(const state_t&, state_t&)>;
 namespace nbody {
 
 // Параметры N-body модели для метода II.
-// Первая версия: p_i = 1, то есть один физический экземпляр на каждый тип атома.
 struct NBodyParams {
     std::size_t dim = 3;
 
@@ -66,7 +65,6 @@ DecodeResult decode_best(const CNF& cnf,
                          const state_t& state,
                          const NBodyParams& params);
 
-// Упрощённый wrapper: кладёт лучшую декодированную модель в model.
 // Возвращает true, если хотя бы какое-то M построилось.
 bool decode(const CNF& cnf,
             const state_t& state,

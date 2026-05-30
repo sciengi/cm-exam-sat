@@ -134,8 +134,6 @@ int main(int argc, char* argv[]) {
         auto end_time = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> diff = end_time - start_time;
 
-        // ИТОГОВЫЙ СТРУКТУРИРОВАННЫЙ ВЫВОД ДЛЯ PYTHON
-        // Формат: УСПЕХ, ФАЙЛ, L, ЗАКОНЫ, ПОПЫТКИ, ВРЕМЯ, РЕШЕНО_ДИЗЪЮНКТОВ, ВСЕГО_ДИЗЪЮНКТОВ
         std::cout << (solved ? "1" : "0") << ","
                   << filepath << ","
                   << cnf.variable_count() << ","

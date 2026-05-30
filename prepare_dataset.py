@@ -13,7 +13,7 @@ def parse_dimacs(filepath):
             # Пропускаем комментарии и заголовок
             if line.startswith('c') or line.startswith('p'):
                 continue
-            # Если встретили % - это конец старого формата DIMACS, прекращаем чтение
+
             if line == '%':
                 break
             
@@ -27,7 +27,7 @@ def parse_dimacs(filepath):
                     else:
                         current_clause.append(val)
                 except ValueError:
-                    pass # Игнорируем любой другой мусор, если он есть
+                    pass
     return clauses
 
 # Ищем все .cnf файлы
@@ -40,12 +40,12 @@ with open(output_file, "w") as out:
     for filepath in cnf_files:
         filename = os.path.basename(filepath)
         try:
-            # 1. Читаем нашим безопасным парсером
+
             clauses = parse_dimacs(filepath)
-            # 2. Передаем готовые массивы в библиотеку
+
             formula = CNF(from_clauses=clauses)
             
-            # 3. Решаем
+
             with Minisat22(bootstrap_with=formula) as solver:
                 if solver.solve():
                     model = solver.get_model()
@@ -57,4 +57,4 @@ with open(output_file, "w") as out:
         except Exception as e:
             print(f"Ошибка при обработке {filename}: {e}")
 
-print(f"✅ Все эталонные ответы успешно сохранены в {output_file}")
+print(f"Все эталонные ответы успешно сохранены в {output_file}")

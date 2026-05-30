@@ -15,9 +15,7 @@ enum class OdeMethod {
 
 class some_ode_solver {
 public:
-    // Старый интерфейс сохранён: some_ode_solver(state.size(), h)
-    // По умолчанию берём RK4, потому что он подходит и для общего ОДУ первого порядка,
-    // и для N-body состояния [positions, velocities].
+
     some_ode_solver(std::size_t state_size,
                     double initial_step,
                     OdeMethod method = OdeMethod::RK4);

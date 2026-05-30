@@ -132,8 +132,7 @@ public:
         const int GENERATIONS = 6;
         
         std::mt19937 gen(std::chrono::steady_clock::now().time_since_epoch().count());
-        
-        // СУЖЕННЫЕ КОМПАКТНЫЕ ДИАПАЗОНЫ ДЛЯ СВЕРХМАЛЫХ КНФ (L <= 20)
+   
         std::uniform_real_distribution<double> dist_gravity(0.01, 1.2);
         std::uniform_real_distribution<double> dist_repulsion(0.1, 4.0);
         std::uniform_real_distribution<double> dist_clause(0.1, 4.0);
@@ -164,7 +163,7 @@ public:
             }
 
             population.clear();
-            population.push_back(parents[0]); // Сохраняем элиту
+            population.push_back(parents[0]); // Сохраняем лучшие
 
             std::uniform_int_distribution<int> parent_dist(0, parents.size() - 1);
             std::uniform_real_distribution<double> mutate_prob(0.0, 1.0);

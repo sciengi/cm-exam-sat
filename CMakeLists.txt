@@ -65,3 +65,14 @@ add_executable(research_bench
     src/numeric/ode.cpp
 )
 target_include_directories(research_bench PRIVATE ${INCLUDE_DIR})
+
+# Добавьте в конец вашего CMakeLists.txt:
+
+add_executable(canonical_solver 
+    src/canonical_main.cpp 
+    src/methods/canonical_nbody.cpp
+    src/cnf/cnf.cpp           # Путь к вашему модулю парсинга КНФ
+    src/numeric/ode.cpp       # Путь к вашим вычмат-методам ОДУ
+)
+
+target_include_directories(canonical_solver PRIVATE src)

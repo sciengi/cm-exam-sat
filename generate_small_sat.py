@@ -10,7 +10,7 @@ def generate_random_3sat(num_vars, num_clauses, filepath):
     """
     clauses = []
     while len(clauses) < num_clauses:
-        # 3 разные переменные (1..num_vars)
+        # 3 переменные
         vars_sample = random.sample(range(1, num_vars + 1), 3)
         # Случайное отрицание
         clause = [v if random.random() > 0.5 else -v for v in vars_sample]
@@ -29,7 +29,7 @@ def generate_random_3sat(num_vars, num_clauses, filepath):
 os.makedirs("bench/test", exist_ok=True)
 
 # Точные характеристики по заданию: L -> число дизъюнктов
-task_specs = {
+task_specs = { 
     3: 6,
     5: 21,
     7: 30,
@@ -46,4 +46,4 @@ for L, C in task_specs.items():
         filename = f"bench/test/uf{L}-{i:02d}.cnf"
         generate_random_3sat(L, C, filename)
 
-print("✅ Все файлы успешно созданы в bench/test/")
+print("Все файлы успешно созданы в bench/test/")

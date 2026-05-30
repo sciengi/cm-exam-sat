@@ -80,7 +80,7 @@ def main():
 
     plt.tight_layout(rect=[0, 0.05, 1, 0.95])
     plt.savefig('final_ablation_study_report.png', dpi=300)
-    print("📈 Комплексный валидационный отчет сохранен в 'final_ablation_study_report.png'")
+    print("Комплексный валидационный отчет сохранен в 'final_ablation_study_report.png'")
     plt.show()
 
 if __name__ == "__main__":

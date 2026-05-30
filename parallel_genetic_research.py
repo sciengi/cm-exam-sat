@@ -5,7 +5,6 @@ import concurrent.futures
 import csv
 from datetime import datetime
 
-# ================= НАСТРОЙКИ СЕРВЕРА =================
 RESEARCH_BIN = "./build/research_bench" 
 CACHE_TXT = "ground_truth.txt"
 BENCH_DIR = "bench/test/"
@@ -16,10 +15,8 @@ FILES_PER_DIM = 20
 
 METHODS_TO_TEST = ["RK4", "DP8", "Leapfrog", "DP8Adaptive"]
 
-# ЖЕСТКИЙ ТАЙМАУТ на один запуск ГА (в секундах)
-# Если C++ зависнет из-за сингулярности, Python убьет его через TASK_TIMEOUT сек.
+
 TASK_TIMEOUT = 180.0 
-# =====================================================
 
 def run_ga_for_file(task_args):
     filepath, method = task_args

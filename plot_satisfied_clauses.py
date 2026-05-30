@@ -17,7 +17,7 @@ def main():
     df['Sat_Clauses'] = pd.to_numeric(df['Sat_Clauses'], errors='coerce').fillna(0)
     df['Total_Clauses'] = pd.to_numeric(df['Total_Clauses'], errors='coerce').fillna(1)
 
-    # Вычисляем новую метрику: процент успешно удовлетворенных дизъюнктов
+    # Вычисляем процент успешно удовлетворенных дизъюнктов
     df['Sat_Percentage'] = (df['Sat_Clauses'] / df['Total_Clauses']) * 100
 
     L_values = sorted(df['Variables_L'].unique())
@@ -42,7 +42,6 @@ def main():
             if df_laws.empty:
                 continue
 
-            # Группируем по размерности L и находим СРЕДНИЙ ПРОЦЕНТ скобок
             grouped = df_laws.groupby('Variables_L')
             mean_sat_pct = grouped['Sat_Percentage'].mean()
             
@@ -53,7 +52,7 @@ def main():
         ax.set_xlabel('Количество переменных (L)', fontsize=11)
         if idx == 0:
             ax.set_ylabel('Выполненные дизъюнкты (%)', fontsize=11)
-        ax.set_ylim(40, 105) # Нижний порог 40%, так как случайное решение 3-SAT дает ~87.5%
+        ax.set_ylim(40, 105)
         ax.grid(True, linestyle='--', alpha=0.6)
 
     # Ставим легенду в самом низу
@@ -62,7 +61,7 @@ def main():
 
     plt.tight_layout(rect=[0, 0.08, 1, 0.92])
     plt.savefig('satisfied_clauses_percentage.png', dpi=300)
-    print("📈 Новый график успешно сохранен в 'satisfied_clauses_percentage.png'")
+    print("Новый график успешно сохранен в 'satisfied_clauses_percentage.png'")
     plt.show()
 
 if __name__ == "__main__":

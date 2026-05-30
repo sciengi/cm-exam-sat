@@ -7,11 +7,11 @@
 
 
 
-const size_t MAX_TRY_COUNT = 100;
+const size_t MAX_TRY_COUNT = 10000;
 
 int main() {
 
-    CNF cnf("../bench/test/normal.cnf");
+    CNF cnf("../bench/test/uf20-09.cnf");
 
     std::vector<bool> model(cnf.variable_count());
 
