@@ -76,3 +76,12 @@ add_executable(canonical_solver
 )
 
 target_include_directories(canonical_solver PRIVATE src)
+
+add_executable(validation_test 
+    src/methods/main_validation_test.cpp 
+    src/methods/nbody.cpp
+    src/methods/canonical_nbody.cpp
+    src/numeric/ode.cpp
+    src/cnf/cnf.cpp
+)
+target_include_directories(validation_test PRIVATE src)

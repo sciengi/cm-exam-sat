@@ -2,7 +2,9 @@
 #include <cnf/cnf.hpp>
 #include <iostream>
 #include <string>
+#include <limits>
 #include <vector>
+#include <cmath>
 #include <chrono>
 
 std::string get_option(const std::vector<std::string>& args, const std::string& opt) {

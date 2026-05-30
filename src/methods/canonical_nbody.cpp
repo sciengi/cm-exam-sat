@@ -1,8 +1,7 @@
 #include <methods/canonical_nbody.hpp>
 #include <random>
-#include <stdexcept>
+#include <cmath>
 #include <algorithm>
-#include <iostream>
 
 namespace canonical_nbody {
 
@@ -12,14 +11,10 @@ state_t init_canonical_state(const CNF& cnf, const CanonicalParams& params, unsi
 
     std::mt19937 gen(seed);
     std::uniform_real_distribution<double> pos_dist(-1.0, 1.0);
-    std::uniform_real_distribution<double> vel_dist(-0.05, 0.05);
+    std::uniform_real_distribution<double> vel_dist(-0.02, 0.02);
 
     for (size_t i = 0; i < state.size(); ++i) {
-        if (i < total_atoms * params.dim) {
-            state[i] = pos_dist(gen);
-        } else {
-            state[i] = vel_dist(gen);
-        }
+        state[i] = (i < total_atoms * params.dim) ? pos_dist(gen) : vel_dist(gen);
     }
     return state;
 }
@@ -30,8 +25,7 @@ deriv_t build_canonical_deriv(const CNF& cnf, const CanonicalParams& params) {
     size_t dim = params.dim;
     double eps2 = params.eps * params.eps;
 
-    // Предвычисляем карту литералов для каждого из 3C атомов
-    std::vector<CanonicalAtom> atoms_map(total_atoms);
+    std::vector<AtomInfo> atoms_map(total_atoms);
     for (size_t m = 0; m < C; ++m) {
         auto clause = cnf[static_cast<int>(m)];
         for (size_t q = 0; q < 3; ++q) {
@@ -42,21 +36,20 @@ deriv_t build_canonical_deriv(const CNF& cnf, const CanonicalParams& params) {
     return [total_atoms, dim, eps2, params, atoms_map, C](const state_t& state, state_t& dst) -> void {
         dst.assign(state.size(), 0.0);
 
-        // 1. Координаты изменяются по скоростям: r' = v
+        // Кинематическая связь: r' = v
         for (size_t i = 0; i < total_atoms * dim; ++i) {
             dst[i] = state[total_atoms * dim + i];
         }
 
         std::vector<double> forces(total_atoms * dim, 0.0);
 
-        // 2. Взаимодействие МЕЖДУ атомами разных дизъюнктов (Законы 1 и 2)
+        // ЗАКОНЫ 1 и 2: Парные взаимодействия между всеми 3C атомами вселенной
         for (size_t i = 0; i < total_atoms; ++i) {
             int lit_i = atoms_map[i].literal;
             
             for (size_t j = i + 1; j < total_atoms; ++j) {
                 int lit_j = atoms_map[j].literal;
 
-                // Считаем расстояние между телом i и j
                 double norm2 = eps2;
                 for (size_t d = 0; d < dim; ++d) {
                     double delta = state[i * dim + d] - state[j * dim + d];
@@ -65,11 +58,8 @@ deriv_t build_canonical_deriv(const CNF& cnf, const CanonicalParams& params) {
                 double rho3 = std::pow(norm2, 1.5);
 
                 double coeff = 0.0;
-                if (lit_i == lit_j) {
-                    coeff = -params.c_att; // Закон 1: Притяжение одинаковых литералов
-                } else if (lit_i == -lit_j) {
-                    coeff = params.c_opp;   // Закон 2: Отталкивание конфликтующих
-                }
+                if (lit_i == lit_j)        coeff = -params.c_att; // Притяжение клонов
+                else if (lit_i == -lit_j)  coeff = params.c_opp;  // Отталкивание антиподов
 
                 if (std::abs(coeff) > 1e-9) {
                     for (size_t d = 0; d < dim; ++d) {
@@ -82,7 +72,7 @@ deriv_t build_canonical_deriv(const CNF& cnf, const CanonicalParams& params) {
             }
         }
 
-        // 3. Расталкивание внутри скобок от общего центра (Закон 3)
+        // ЗАКОН 3: Локальное выталкивание троек из центра масс их собственного дизъюнкта
         for (size_t m = 0; m < C; ++m) {
             std::vector<double> center(dim, 0.0);
             for (size_t q = 0; q < 3; ++q) {
@@ -107,7 +97,7 @@ deriv_t build_canonical_deriv(const CNF& cnf, const CanonicalParams& params) {
             }
         }
 
-        // 4. Запись ускорений с учетом линейного трения: v' = force - gamma * v
+        // Динамика Ньютона с диссипацией: v' = force - gamma * v
         for (size_t i = 0; i < total_atoms * dim; ++i) {
             double v = state[total_atoms * dim + i];
             dst[total_atoms * dim + i] = forces[i] - params.gamma * v;
@@ -123,7 +113,6 @@ size_t decode_canonical_majority(const CNF& cnf, const state_t& state, const Can
 
     out_model.assign(L, false);
 
-    // Собираем проекции координат по первой оси (X) для каждого литерала
     std::vector<std::vector<double>> pos_lits(L + 1);
     std::vector<std::vector<double>> neg_lits(L + 1);
 
@@ -131,16 +120,13 @@ size_t decode_canonical_majority(const CNF& cnf, const state_t& state, const Can
         size_t m = i / 3;
         size_t q = i % 3;
         int lit = cnf[static_cast<int>(m)][q];
-        double x_coord = state[i * dim + 0]; // Проекция на ось X
+        double x_coord = state[i * dim + 0]; // Проекция геометрии на ось X
 
-        if (lit > 0) {
-            pos_lits[static_cast<size_t>(lit)].push_back(x_coord);
-        } else {
-            neg_lits[static_cast<size_t>(-lit)].push_back(x_coord);
-        }
+        if (lit > 0) pos_lits[static_cast<size_t>(lit)].push_back(x_coord);
+        else         neg_lits[static_cast<size_t>(-lit)].push_back(x_coord);
     }
 
-    // Мажоритарное голосование: сравниваем средние координаты центров масс клонов
+    // Каноническое мажоритарное декодирование Матиясевича
     for (size_t v = 1; v <= L; ++v) {
         double pos_sum = 0.0, neg_sum = 0.0;
         for (double x : pos_lits[v]) pos_sum += x;
@@ -152,7 +138,6 @@ size_t decode_canonical_majority(const CNF& cnf, const state_t& state, const Can
         out_model[v - 1] = (pos_mean > neg_mean);
     }
 
-    // Считаем качество полученной дискретной модели
     size_t satisfied = 0;
     for (size_t m = 0; m < C; ++m) {
         auto clause = cnf[static_cast<int>(m)];

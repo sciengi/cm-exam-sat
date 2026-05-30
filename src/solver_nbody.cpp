@@ -38,8 +38,7 @@ int main(int argc, char* argv[]) {
     int laws = std::stoi(laws_str);
 
     OdeMethod ode_method = OdeMethod::RK4;
-    if (method_str == "Euler") ode_method = OdeMethod::Euler;
-    else if (method_str == "Leapfrog") ode_method = OdeMethod::Leapfrog;
+    if (method_str == "Leapfrog") ode_method = OdeMethod::Leapfrog;
     else if (method_str == "DP8") ode_method = OdeMethod::DP8;
     else if (method_str == "DP8Adaptive") ode_method = OdeMethod::DP8Adaptive;
 

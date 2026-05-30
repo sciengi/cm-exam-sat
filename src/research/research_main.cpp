@@ -26,8 +26,7 @@ int main(int argc, char* argv[]) {
     }
 
     OdeMethod method = OdeMethod::RK4;
-    if (method_str == "Euler") method = OdeMethod::Euler;
-    else if (method_str == "Leapfrog") method = OdeMethod::Leapfrog;
+    if (method_str == "Leapfrog") method = OdeMethod::Leapfrog;
     else if (method_str == "DP8") method = OdeMethod::DP8;
     else if (method_str == "DP8Adaptive") method = OdeMethod::DP8Adaptive;
 
