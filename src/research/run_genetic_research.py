@@ -14,11 +14,11 @@ BENCH_DIR = os.path.join(ROOT_DIR, "bench", "test")
 GENETIC_CSV = os.path.join(ROOT_DIR, "genetic_research_results.csv")
 
 # Конфигурации для исследования
-DIMENSIONS = ["l3", "l6", "l9", "l12", "l15", "l18"]
+DIMENSIONS = ["l3", "l6", "l9", "l12", "l15", "l18", "l20"]
 FILES_PER_DIM = 10  # По 10 жестких файлов на класс
 
-MODEL_TYPE = "2L"            # Альтернатива: "3C"
-STRATEGY = "GreedySkip"        # Альтернатива: "GreedySkip"
+MODEL_TYPE = "3C"            # Альтернатива: "3C"
+STRATEGY = "HardStop"        # Альтернатива: "GreedySkip"
 ODE_METHOD = "RK4"   # Alternative: "RK4", "RK8"
 # =============================================================
 
@@ -35,8 +35,8 @@ def evaluate_single_file_ga(task_packet):
     ]
     
     try:
-        # Ставим таймаут 50 секунд на эволюцию одной формулы
-        res = subprocess.run(cmd, capture_output=True, text=True, check=True, timeout=50)
+        # Ставим таймаут 120 секунд на эволюцию одной формулы
+        res = subprocess.run(cmd, capture_output=True, text=True, check=True, timeout=120)
         output = res.stdout.strip()
         
         # Ищем в консольном выводе бинарника маркер SUCCESS_PARAM

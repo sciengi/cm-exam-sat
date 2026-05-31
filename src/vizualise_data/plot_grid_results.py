@@ -11,7 +11,7 @@ MASTER_CSV = os.path.join(ROOT_DIR, "grid_search_master.csv")
 
 def main():
     if not os.path.exists(MASTER_CSV):
-        print(f"❌ Ошибка: Файл {MASTER_CSV} не найден!")
+        print(f"Ошибка: Файл {MASTER_CSV} не найден!")
         return
 
     df = pd.read_csv(MASTER_CSV)
@@ -93,7 +93,7 @@ def main():
     plt.savefig(heatmap_path, dpi=300, bbox_inches='tight')
     plt.close()
 
-    print(f"📈 Сглаженные графики сохранены в корне проекта: 'grid_3d_surface_dense.png' и 'grid_2d_heatmap_dense.png'")
+    print(f"Сглаженные графики сохранены в корне проекта: 'grid_3d_surface_dense.png' и 'grid_2d_heatmap_dense.png'")
 
 if __name__ == "__main__":
     main()

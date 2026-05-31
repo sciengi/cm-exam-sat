@@ -6,18 +6,18 @@ from scipy.stats import linregress
 # Автоматическое определение абсолютных путей от корня репозитория
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, "..", ".."))
-GENETIC_CSV = os.path.join(ROOT_DIR, "genetic_research_results.csv")
+GENETIC_CSV = os.path.join(ROOT_DIR, "genetic_research_results_2L_RK4_Greedy.csv")
 TREND_PNG = os.path.join(ROOT_DIR, "genetic_parameter_trends.png")
 
 def main():
     if not os.path.exists(GENETIC_CSV):
-        print(f"❌ Файл {GENETIC_CSV} не найден! Запустите сначала run_genetic_research.py")
+        print(f"Файл {GENETIC_CSV} не найден! Запустите сначала run_genetic_research.py")
         return
 
     # Загружаем собранный эволюционный датасет
     df = pd.read_csv(GENETIC_CSV)
     if df.empty:
-        print("❌ Файл результатов пуст.")
+        print("Файл результатов пуст.")
         return
 
     print(f"[I] Успешно загружено {len(df)} строк эволюционных вычислений.")
@@ -66,7 +66,7 @@ def main():
     # Сохраняем в высоком качестве
     plt.savefig(TREND_PNG, dpi=300, bbox_inches='tight')
     plt.close()
-    print(f"🎉 Научный аналитический график успешно сгенерирован и сохранен в: '{TREND_PNG}'")
+    print(f"Научный аналитический график успешно сгенерирован и сохранен в: '{TREND_PNG}'")
 
 if __name__ == "__main__":
     main()

@@ -16,14 +16,13 @@ BENCH_DIR = os.path.join(ROOT_DIR, "bench", "test")
 MASTER_CSV = os.path.join(ROOT_DIR, "grid_search_master.csv")
 
 DIMENSIONS = ["l3", "l6", "l9", "l12", "l15", "l18"]
-FILES_PER_DIM = 5  # Количество файлов для усреднения внутри одной точки
+FILES_PER_DIM = 5  
 
 MODELS = ["2L", "3C"]
 STRATEGIES = ["HardStop", "GreedySkip"]
 ODE_SOLVERS = ["RK4", "RK8", "DP8Adaptive"]
 
 # ДИНАМИЧЕСКИЙ ГЕНЕРАТОР ПЛОТНОЙ СЕТКИ С ШАГОМ 0.1
-# np.arange(start, stop + step, step) гарантирует включение правой границы
 C_ATT_RANGE = [round(x, 1) for x in np.arange(0.1, 1.5 + 0.1, 0.1)]
 C_OPP_RANGE = [round(x, 1) for x in np.arange(0.5, 2.5 + 0.1, 0.1)]
 C_CLAUSE_RANGE = [round(x, 1) for x in np.arange(1.0, 3.0 + 0.1, 0.1)]
@@ -58,7 +57,6 @@ def evaluate_single_config(task_packet):
         ]
         
         try:
-            # Жесткий таймаут 5 секунд на симуляцию, так как сетка огромная
             res = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
             output = res.stdout.strip()
             
@@ -87,18 +85,19 @@ def evaluate_single_config(task_packet):
 
 def main():
     print(f"[{datetime.now()}] Старт плотной генерации Grid Search (шаг 0.1)...")
-    print(f" -> Точек c_att: {len(C_ATT_RANGE)} | c_opp: {len(C_OPP_RANGE)} | c_clause: {len(C_CLAUSE_RANGE)} | gamma: {len(GAMMA_RANGE)}")
     
-    grid_combinations = list(itertools.product(
+    # Считаем общее количество задач математически, чтобы не разворачивать генератор в память
+    total_tasks = (len(MODELS) * len(STRATEGIES) * len(ODE_SOLVERS) * len(C_ATT_RANGE) * len(C_OPP_RANGE) * len(C_CLAUSE_RANGE) * len(GAMMA_RANGE) * len(DIMENSIONS))
+    
+    print(f"[I] Ожидается {total_tasks} комбинаций параметров.")
+
+    # 1. Создаем ИТЕРАТОР (обратите внимание, нет вызова list()!)
+    grid_combinations = itertools.product(
         MODELS, STRATEGIES, ODE_SOLVERS, 
         C_ATT_RANGE, C_OPP_RANGE, C_CLAUSE_RANGE, GAMMA_RANGE, 
         DIMENSIONS
-    ))
-    
-    total_tasks = len(grid_combinations)
-    print(f"[I] Сгенерировано {total_tasks} комбинаций параметров.")
+    )
 
-    # Создаем/очищаем мастер-файл перед записью
     with open(MASTER_CSV, mode='w', newline='') as f:
         writer = csv.writer(f)
         writer.writerow([
@@ -107,21 +106,22 @@ def main():
             "Success_Rate", "Avg_Satisfied_Pct", "Avg_Time"
         ])
 
-    completed = 0
-    # Выделяем пул процессов на все доступные логические ядра CPU
-    with concurrent.futures.ProcessPoolExecutor() as executor:
-        futures = {executor.submit(evaluate_single_config, task): task for task in grid_combinations}
+        completed = 0
         
-        for future in concurrent.futures.as_completed(futures):
-            completed += 1
-            result = future.result()
+        # 2. Передаем итератор в executor.map с chunksize
+        with concurrent.futures.ProcessPoolExecutor() as executor:
+            # chunksize=100 заставляет Python выдавать задачи процессору мелкими порциями,
+            # ОПЕРАТИВНАЯ ПАМЯТЬ НЕ БУДЕТ ПЕРЕПОЛНЯТЬСЯ
+            results = executor.map(evaluate_single_config, grid_combinations, chunksize=100)
             
-            if result:
-                with open(MASTER_CSV, mode='a', newline='') as f:
-                    csv.writer(f).writerow(result)
-            
-            if completed % 1000 == 0 or completed == total_tasks:
-                print(f" [{datetime.now()}] Прогресс ультра-сетки: {completed}/{total_tasks} вычислений завершено.")
+            for result in results:
+                completed += 1
+                if result:
+                    writer.writerow(result)
+                    f.flush() # ПРИНУДИТЕЛЬНО ПИШЕМ СТРОКУ НА ЖЕСТКИЙ ДИСК
+                
+                if completed % 1000 == 0 or completed == total_tasks:
+                    print(f" [{datetime.now()}] Прогресс ультра-сетки: {completed}/{total_tasks} вычислений завершено.")
 
     print(f"[{datetime.now()}] 🏁 Плотный Grid Search успешно выполнен!")
 
