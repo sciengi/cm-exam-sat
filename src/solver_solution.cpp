@@ -1,5 +1,5 @@
 #include <cnf/cnf.hpp>
-#include <methods/solution.hpp>
+#include <methods/nbody.hpp>
 #include <numeric/ode.hpp>
 
 #include <algorithm>

@@ -1,217 +1,114 @@
 #include <cnf/cnf.hpp>
 #include <methods/nbody.hpp>
+#include <methods/canonical_nbody.hpp>
 #include <numeric/ode.hpp>
 
-#include <cmath>
+#include <chrono>
 #include <iostream>
 #include <string>
 #include <vector>
+#include <cmath>
 
-namespace {
-
-void print_model(const CNF::model& model)
-{
-    for (bool value : model) {
-        std::cout << (value ? "1" : "0") << ' ';
+std::string get_cmd_option(const std::vector<std::string>& args, const std::string& option) {
+    for (size_t i = 0; i < args.size() - 1; ++i) {
+        if (args[i] == option) return args[i + 1];
     }
-    std::cout << '\n';
+    return "";
 }
 
-const char* method_name(OdeMethod method)
-{
-    switch (method) {
-    case OdeMethod::Euler: return "Euler";
-    case OdeMethod::Leapfrog: return "Leapfrog";
-    case OdeMethod::RK4: return "RK4";
-    case OdeMethod::DP8: return "DP8";
-    case OdeMethod::DP8Adaptive: return "DP8Adaptive";
-    }
+int main(int argc, char* argv[]) {
+    std::vector<std::string> args(argv, argv + argc);
 
-    return "Unknown";
-}
+    std::string filepath = get_cmd_option(args, "--file");
+    std::string model_type = get_cmd_option(args, "--model_type"); // 2L или 3C
+    std::string strategy_str = get_cmd_option(args, "--strategy"); // GreedySkip или HardStop
+    std::string method_str = get_cmd_option(args, "--method");     // RK4, RK8, DP8, DP8Adaptive
 
-void print_unsatisfied_clauses(const CNF& cnf, const CNF::model& model)
-{
-    for (std::size_t i = 0; i < cnf.clause_count(); ++i) {
-        auto clause = cnf[i];
+    // Считывание физических коэффициентов сил
+    double c_att = std::stod(get_cmd_option(args, "--c_att"));
+    double c_opp = std::stod(get_cmd_option(args, "--c_opp"));
+    double c_clause = std::stod(get_cmd_option(args, "--c_clause"));
+    double gamma = std::stod(get_cmd_option(args, "--gamma"));
 
-        bool ok = false;
-
-        for (std::size_t j = 0; j < CNF::var_in_clause; ++j) {
-            int lit = clause[j];
-
-            bool value = lit > 0
-                ? model[static_cast<std::size_t>(lit - 1)]
-                : !model[static_cast<std::size_t>(-lit - 1)];
-
-            ok = ok || value;
-        }
-
-        if (!ok) {
-            std::cout << "Unsatisfied clause #" << i << ": "
-                      << clause[0] << " "
-                      << clause[1] << " "
-                      << clause[2] << "\n";
-        }
-    }
-}
-
-} // namespace
-
-int main(int argc, char** argv)
-{
-    if (argc != 2 && argc != 5) {
-        std::cerr
-            << "Usage:\n"
-            << "  nbody_solver <dimacs_path>\n"
-            << "  nbody_solver <dimacs_path> <dim> <max_steps> <restarts>\n";
+    if (filepath.empty() || model_type.empty() || method_str.empty()) {
+        std::cerr << "ERR: Missing required arguments.\n";
         return 1;
     }
 
-    const std::string dimacs_path = argv[1];
+    // Парсинг вычмат-метода
+    OdeMethod ode_method = OdeMethod::RK4;
+    if (method_str == "RK8") ode_method = OdeMethod::RK8;
+    else if (method_str == "DP8Adaptive") ode_method = OdeMethod::DP8Adaptive;
 
-    std::size_t dim = 3;
-    std::size_t max_steps = 5000;
-    std::size_t restarts = 3;
+    try {
+        CNF cnf(filepath);
+        size_t total_clauses = cnf.clause_count();
+        size_t L = cnf.variable_count();
+        double dt = 0.01;
+        size_t max_steps = 1500;
+        
+        bool solved = false;
+        size_t absolute_best_satisfied = 0;
 
-    if (argc == 5) {
-        dim = static_cast<std::size_t>(std::stoul(argv[2]));
-        max_steps = static_cast<std::size_t>(std::stoul(argv[3]));
-        restarts = static_cast<std::size_t>(std::stoul(argv[4]));
-    }
+        auto start_time = std::chrono::high_resolution_clock::now();
 
-    CNF cnf(dimacs_path);
+        if (model_type == "2L") {
+            // ================= РЕЖИМ 2L УПРОЩЕННЫЙ =================
+            nbody::NBodyParams params;
+            params.c_att = c_att; params.c_opp = c_opp; params.c_clause = c_clause; params.gamma = gamma;
+            params.strategy = (strategy_str == "GreedySkip") ? nbody::DecodeStrategy::GreedySkip : nbody::DecodeStrategy::HardStop;
 
-    const std::vector<double> c_opp_values    = {0.5, 1.0, 2.0};
-    const std::vector<double> c_att_values    = {0.01, 0.05};
-    const std::vector<double> c_clause_values = {0.5, 1.0, 2.0};
-    const std::vector<double> gamma_values    = {0.05, 0.2};
+            state_t state = nbody::init_state(L, params, 42);
+            deriv_t deriv = nbody::build_deriv(cnf, params);
+            some_ode_solver solver(state.size(), dt, ode_method);
+            double t = 0.0;
 
-    const double step_size = 1e-3;
-    const std::size_t decode_every = 100;
+            for (size_t step = 0; step < max_steps; ++step) {
+                solver.step(state, t, deriv);
+                if (!state.empty() && (!std::isfinite(state[0]) || !std::isfinite(state[state.size()/2]))) break;
 
-    const OdeMethod method = OdeMethod::RK4;
+                if (step % 25 == 0) {
+                    nbody::DecodeResult decoded = nbody::decode_best(cnf, state, params);
+                    if (decoded.satisfied > absolute_best_satisfied) absolute_best_satisfied = decoded.satisfied;
+                    if (decoded.sat) { solved = true; break; }
+                }
+            }
+        } else if (model_type == "3C") {
+            // ================= РЕЖИМ 3С КАНОНИЧЕСКИЙ =================
+            canonical_nbody::CanonicalParams params;
+            params.c_att = c_att; params.c_opp = c_opp; params.c_clause = c_clause; params.gamma = gamma;
 
-    nbody::DecodeResult global_best;
-    global_best.model.assign(cnf.variable_count(), false);
+            state_t state = canonical_nbody::init_canonical_state(cnf, params, 42);
+            deriv_t deriv = canonical_nbody::build_canonical_deriv(cnf, params);
+            some_ode_solver solver(state.size(), dt, ode_method);
+            double t = 0.0;
 
-    std::size_t run_id = 0;
+            for (size_t step = 0; step < max_steps; ++step) {
+                solver.step(state, t, deriv);
+                if (!state.empty() && (!std::isfinite(state[0]) || !std::isfinite(state[state.size()/2]))) break;
 
-    for (double c_opp : c_opp_values) {
-        for (double c_att : c_att_values) {
-            for (double c_clause : c_clause_values) {
-                for (double gamma : gamma_values) {
-                    for (std::size_t restart = 0; restart < restarts; ++restart) {
-                        nbody::NBodyParams params;
-                        params.dim = dim;
-                        params.c_opp = c_opp;
-                        params.c_att = c_att;
-                        params.c_clause = c_clause;
-                        params.gamma = gamma;
-
-                        const unsigned seed = static_cast<unsigned>(1234 + 1009 * run_id + restart);
-
-                        auto state = nbody::init_state(cnf.variable_count(), params, seed);
-                        auto deriv = nbody::build_deriv(cnf, params);
-
-                        some_ode_solver solver(state.size(), step_size, method);
-
-                        double t = 0.0;
-
-                        nbody::DecodeResult run_best;
-                        run_best.model.assign(cnf.variable_count(), false);
-
-                        for (std::size_t step = 0; step < max_steps; ++step) {
-                            solver.step(state, t, deriv);
-
-                            bool bad_state = false;
-                            for (double x : state) {
-                                if (!std::isfinite(x)) {
-                                    bad_state = true;
-                                    break;
-                                }
-                            }
-
-                            if (bad_state) {
-                                std::cout
-                                    << "run = " << run_id
-                                    << " failed: nan/inf\n";
-                                break;
-                            }
-
-                            if (step % decode_every != 0) {
-                                continue;
-                            }
-
-                            auto decoded = nbody::decode_best(cnf, state, params);
-
-                            if (!decoded.decoded) {
-                                continue;
-                            }
-
-                            if (!run_best.decoded || decoded.satisfied > run_best.satisfied) {
-                                run_best = decoded;
-                            }
-
-                            if (!global_best.decoded || decoded.satisfied > global_best.satisfied) {
-                                global_best = decoded;
-
-                                std::cout
-                                    << "NEW BEST: "
-                                    << global_best.satisfied << " / " << cnf.clause_count()
-                                    << ", run = " << run_id
-                                    << ", step = " << step
-                                    << ", t = " << t
-                                    << ", method = " << method_name(method)
-                                    << ", opp = " << c_opp
-                                    << ", att = " << c_att
-                                    << ", clause = " << c_clause
-                                    << ", gamma = " << gamma
-                                    << ", restart = " << restart
-                                    << "\n";
-                            }
-
-                            if (decoded.sat) {
-                                std::cout << "SAT found!\n";
-                                std::cout << "Model: ";
-                                print_model(decoded.model);
-                                return 0;
-                            }
-                        }
-
-                        std::cout
-                            << "run = " << run_id
-                            << ", best = "
-                            << (run_best.decoded ? run_best.satisfied : 0)
-                            << " / " << cnf.clause_count()
-                            << ", opp = " << c_opp
-                            << ", att = " << c_att
-                            << ", clause = " << c_clause
-                            << ", gamma = " << gamma
-                            << ", restart = " << restart
-                            << "\n";
-
-                        ++run_id;
-                    }
+                if (step % 25 == 0) {
+                    CNF::model m;
+                    size_t sat = canonical_nbody::decode_canonical_majority(cnf, state, params, m);
+                    if (sat > absolute_best_satisfied) absolute_best_satisfied = sat;
+                    if (sat == total_clauses) { solved = true; break; }
                 }
             }
         }
+
+        auto end_time = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> diff = end_time - start_time;
+
+        // Вывод строго одной плоской строки CSV: Is_Solved,Sat_Clauses,Total_Clauses,Execution_Time
+        std::cout << (solved ? "1" : "0") << ","
+                  << absolute_best_satisfied << ","
+                  << total_clauses << ","
+                  << diff.count() << "\n";
+
+    } catch (const std::exception& ex) {
+        std::cerr << "Execution error: " << ex.what() << "\n";
+        return 1;
     }
 
-    std::cout << "FAIL: parameter sweep finished\n";
-
-    if (global_best.decoded) {
-        std::cout
-            << "Global best: "
-            << global_best.satisfied
-            << " / " << cnf.clause_count()
-            << "\n";
-        std::cout << "Best model: ";
-        print_model(global_best.model);
-        print_unsatisfied_clauses(cnf, global_best.model);
-    } else {
-        std::cout << "No decoded model was produced\n";
-    }
-
-    return global_best.sat ? 0 : 1;
+    return 0;
 }

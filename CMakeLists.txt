@@ -9,52 +9,80 @@ add_compile_options(-Wall -Wextra -Wpedantic)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-include_directories(src/)
+# Общая папка для инклудов, чтобы не дублировать код
+set(INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
+# ==========================================
+# 1. ТЕСТОВЫЕ ПРОГРАММЫ (Компоненты и производные)
+# ==========================================
 
+# Тест парсера КНФ
+add_executable(test_cnf 
+    src/cnf/test_cnf.cpp 
+    src/cnf/cnf.cpp
+)
+target_include_directories(test_cnf PRIVATE ${INCLUDE_DIR})
 
-# ===== CNF module =====================
-set(SOURCES src/cnf/cnf.cpp )
-add_library(cnf STATIC ${SOURCES})
-target_include_directories(cnf PUBLIC src/cnf/)
+# Тест вычисления производных для N-Body метода
+add_executable(test_nbody_deriv 
+    src/test_nbody_deriv.cpp 
+    src/cnf/cnf.cpp 
+    src/methods/nbody.cpp
+)
+target_include_directories(test_nbody_deriv PRIVATE ${INCLUDE_DIR})
 
-# ===== Ode solvers module =============
-set(SOURCES src/numeric/ode.cpp)
-add_library(ode STATIC ${SOURCES})
-target_include_directories(ode PUBLIC src/ode/)
+# # Тест вычисления производных для базового метода (Solution)
+# add_executable(test_solution_deriv 
+#     src/test_solution_deriv.cpp 
+#     src/cnf/cnf.cpp 
+#     src/methods/nbody.cpp
+# )
+# target_include_directories(test_solution_deriv PRIVATE ${INCLUDE_DIR})
 
-# ===== Solution method module =========
-set(SOURCES src/methods/solution.cpp)
-add_library(method_solution STATIC ${SOURCES})
-target_include_directories(method_solution PUBLIC src/methods/)
+# ==========================================
+# 2. ОСНОВНЫЕ РЕШАТЕЛИ (Solvers)
+# ==========================================
 
-# ===== NBody method module ============
-set(SOURCES src/methods/nbody.cpp)
-add_library(method_nbody STATIC ${SOURCES})
-target_include_directories(method_nbody PUBLIC src/methods/)
+# Решатель на базе метода N-Body
+add_executable(solver_nbody 
+    src/solver_nbody.cpp 
+    src/cnf/cnf.cpp 
+    src/methods/nbody.cpp 
+    src/methods/canonical_nbody.cpp
+    src/numeric/ode.cpp
+)
+target_include_directories(solver_nbody PRIVATE ${INCLUDE_DIR})
 
-# ===== CNF test =======================
-set(SOURCES src/test_cnf.cpp)
-add_executable(test_cnf ${SOURCES})
-target_link_libraries(test_cnf PRIVATE cnf)
+# ==========================================
+# 3. ИССЛЕДОВАТЕЛЬСКИЙ СТЕНД (Этапы 1 и 2)
+# ==========================================
 
-# ===== Solution method deriv test =====
-set(SOURCES src/test_solution_deriv.cpp)
-add_executable(test_solution_deriv ${SOURCES})
-target_link_libraries(test_solution_deriv PRIVATE cnf method_solution)
+# Наша программа оптимизации параметров (ГА + Статистика)
+add_executable(research_bench 
+    src/research/research_main.cpp 
+    src/cnf/cnf.cpp 
+    src/methods/nbody.cpp 
+    src/methods/canonical_nbody.cpp
+    src/numeric/ode.cpp
+)
+target_include_directories(research_bench PRIVATE ${INCLUDE_DIR})
 
-# ===== NBody method deriv test ========
-set(SOURCES src/test_nbody_deriv.cpp)
-add_executable(test_nbody_deriv ${SOURCES})
-target_link_libraries(test_nbody_deriv PRIVATE cnf method_nbody)
+# Добавьте в конец вашего CMakeLists.txt:
 
-# ===== Solver on solution method ======
-set(SOURCES src/solver_solution.cpp)
-add_executable(solver_solution ${SOURCES})
-target_link_libraries(solver_solution PRIVATE cnf ode method_solution)
+add_executable(canonical_solver 
+    src/canonical_main.cpp 
+    src/methods/canonical_nbody.cpp
+    src/cnf/cnf.cpp           # Путь к вашему модулю парсинга КНФ
+    src/numeric/ode.cpp       # Путь к вашим вычмат-методам ОДУ
+)
 
-# ===== Solver on nbody method =========
-set(SOURCES src/solver_nbody.cpp)
-add_executable(solver_nbody ${SOURCES})
-target_link_libraries(solver_nbody PRIVATE cnf ode method_nbody)
+target_include_directories(canonical_solver PRIVATE src)
 
+add_executable(validation_test 
+    src/methods/main_validation_test.cpp 
+    src/methods/nbody.cpp
+    src/methods/canonical_nbody.cpp
+    src/numeric/ode.cpp
+    src/cnf/cnf.cpp
+)
+target_include_directories(validation_test PRIVATE src)
