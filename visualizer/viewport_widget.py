@@ -1,30 +1,21 @@
 
 import numpy as np
-
-from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QPushButton
+from PySide6.QtWidgets import QWidget, QVBoxLayout
 from pyqtgraph.opengl.MeshData import MeshData
 import pyqtgraph.opengl as gl
 
 
-class MainWindow(QMainWindow):
+class ViewportWidget(QWidget):
     
-    # TODO: add logging 
-    
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent)
         
-        self.setWindowTitle("Visualizer Prototype")
-        self.resize(800, 600)
-
-        central_widget = QWidget()
-        self.setCentralWidget(central_widget)
-        layout = QVBoxLayout(central_widget)
-
-        # TODO: move to Viewport widget
+        layout = QVBoxLayout(self)
+        
         self.view = gl.GLViewWidget()
-        self.view.setCameraPosition(distance=3, elevation=30, azimuth=45)
+        self.view.setCameraPosition(distance=4, elevation=30, azimuth=45)
         layout.addWidget(self.view)
-
+        
         grid = gl.GLGridItem()
         grid.setSize(x=2, y=2, z=2)
         grid.setSpacing(x=0.2, y=0.2, z=0.2)
@@ -41,16 +32,8 @@ class MainWindow(QMainWindow):
             glOptions='opaque'
         )
         self.view.addItem(self.mesh_item)
-
-        # TODO: move to ComandPanel widget
-        self.btn_generate = QPushButton("reset")
-        self.btn_generate.setStyleSheet("font-size: 14px; padding: 10px;")
-        self.btn_generate.clicked.connect(self.generate_and_update)
-        layout.addWidget(self.btn_generate)
-
-        self.generate_and_update()  
-
-    def generate_and_update(self):
+        
+    def update(self):
         
         # TODO: split generation (that will be reading from solver) and update
         # TODO(future): read about gl routines: how to render effective 
@@ -82,4 +65,3 @@ class MainWindow(QMainWindow):
         self.mesh_item.setMeshData(meshdata=md)
         self.mesh_item.opts['lightPos'] = (5, 5, 10)
         self.mesh_item.update()
-        
