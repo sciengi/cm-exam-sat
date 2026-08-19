@@ -16,13 +16,13 @@ class CommandPanel(QWidget):
         layout.addWidget(self.btn_load)
         
         self.btn_step_forward = QPushButton('Step')
-        self.btn_load.setEnabled(False)
+        self.btn_step_forward.setEnabled(False)
         layout.addWidget(self.btn_step_forward)
         
         self.btn_step_backward = QPushButton('Back')
-        self.btn_load.setEnabled(False)
+        self.btn_step_backward.setEnabled(False)
         layout.addWidget(self.btn_step_backward)
         
         self.btn_goto = QPushButton('Goto')
-        self.btn_load.setEnabled(False)
+        self.btn_goto.setEnabled(False)
         layout.addWidget(self.btn_goto)
