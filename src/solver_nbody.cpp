@@ -47,15 +47,15 @@ int main(int argc, char** argv) {
 	// TODO: task setup event
 	std::cout << "TASK(setup): "
 			  << "file=" << std::quoted(argv[1])
-			  << "dim" << params.dim
-			  << "c_opp" << params.c_opp
-			  << "c_att" << params.c_att
-			  << "c_clause" << params.c_clause
-			  << "gamma" << params.gamma
-			  << "seed" << seed
-			  << "step_size" << step_size
-			  << "step_limit" << step_limit
-			  << "decode_every" << decode_every
+			  << " dim=" << params.dim
+			  << " c_opp=" << params.c_opp
+			  << " c_att=" << params.c_att
+			  << " c_clause=" << params.c_clause
+			  << " gamma=" << params.gamma
+			  << " seed=" << seed
+			  << " step_size=" << step_size
+			  << " step_limit=" << step_limit
+			  << " decode_every=" << decode_every
 			  << std::endl;
 
 	for (std::size_t step = 0; step < step_limit; ++step) {
