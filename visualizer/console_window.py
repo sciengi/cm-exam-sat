@@ -1,15 +1,20 @@
 
-from PySide6.QtWidgets import QWidget, QVBoxLayout
+from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout
 from qtconsole.rich_jupyter_widget import RichJupyterWidget
 from qtconsole.inprocess import QtInProcessKernelManager
 
 
-class ConsoleWidget(QWidget):
+class ConsoleWindow(QMainWindow):
     
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        layout = QVBoxLayout(self)
+        self.setWindowTitle("Console")
+        self.resize(800, 600)
+
+        central_widget = QWidget()
+        self.setCentralWidget(central_widget)
+        layout = QVBoxLayout(central_widget)
         
         self.kernel_manager = QtInProcessKernelManager()  # TODO: read about 
         self.kernel_manager.start_kernel()                

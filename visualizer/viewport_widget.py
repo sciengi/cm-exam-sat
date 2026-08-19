@@ -33,12 +33,14 @@ class ViewportWidget(QWidget):
         )
         self.view.addItem(self.mesh_item)
         
+        self.update()
+        
     def update(self):
         
         # TODO: split generation (that will be reading from solver) and update
         # TODO(future): read about gl routines: how to render effective 
         
-        centers = np.random.uniform(-1., 1., (1000, 3))
+        centers = np.random.uniform(-1., 1., (100, 3))
 
         all_verts = []
         all_faces = []
