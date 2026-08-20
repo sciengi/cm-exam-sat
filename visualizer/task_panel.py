@@ -3,13 +3,13 @@ from PySide6.QtWidgets import QWidget, QHBoxLayout
 
 from viewport_widget import ViewportWidget
 from plots_panel import PlotsPanel
-
+from source import Source
 
 class TaskPanel(QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, source: Source, parent=None):
         super().__init__(parent)
         
-        # TODO: specify task source here
+        self.source = source
         
         layout = QHBoxLayout(self)
                 

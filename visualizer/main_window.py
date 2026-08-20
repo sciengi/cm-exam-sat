@@ -3,6 +3,7 @@ from PySide6.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QTabWidget
 
 from left_panel import LeftPanel
 from task_panel import TaskPanel
+from source import FileSource
 
 class MainWindow(QMainWindow):
     
@@ -30,7 +31,7 @@ class MainWindow(QMainWindow):
         
     def new_task(self, filename: str):
         # TODO: write tab name generation by filename
-        self.tasks.addTab(TaskPanel(), filename)
+        self.tasks.addTab(TaskPanel(FileSource(filename)), filename)
         
     def close_task(self, index):
         widget = self.tasks.widget(index)
