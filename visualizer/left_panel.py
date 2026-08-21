@@ -14,5 +14,5 @@ class LeftPanel(QWidget):
         layout.addWidget(self.control, stretch=1)
 
         self.stub = QWidget()
-        layout.addWidget(self.stub, stretch=1)
+        layout.addWidget(self.stub, stretch=2)  # TODO: InfoPanel and SolverCtlPanel
         

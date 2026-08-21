@@ -16,10 +16,7 @@ class ControlWidget(QWidget):
         self.console_window = None
         
         layout = QVBoxLayout(self)
-        
-        # TODO: add functionallity to each button
-        # TODO: mind about buttons state (no source - all disabled, etc)
-        
+                
         self.btn_new = QPushButton('New Task')
         self.btn_new.clicked.connect(self.browse_task)
         layout.addWidget(self.btn_new)
@@ -29,6 +26,9 @@ class ControlWidget(QWidget):
         layout.addWidget(self.btn_console)
         
         # TODO: add task control widget, to dispatch events in one place
+        
+        # TODO: add functionallity to each button
+        # TODO: think about buttons state (no source - all disabled, etc)
         
         self.btn_step_forward = QPushButton('Step')
         self.btn_step_forward.clicked.connect(lambda: self.step_requested.emit())
@@ -48,7 +48,7 @@ class ControlWidget(QWidget):
             self.console_window.show()
             
     def browse_task(self):
-        filepath, _ = QFileDialog.getOpenFileName(self, caption='', dir='')  # TODO: setup filter and dir
+        filepath, _ = QFileDialog.getOpenFileName(self, caption='', dir='')  # TODO(future): setup filter and dir
         if filepath:
             self.new_task_selected.emit(filepath)
             

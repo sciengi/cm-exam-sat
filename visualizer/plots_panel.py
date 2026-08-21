@@ -12,7 +12,7 @@ class PlotsPanel(QWidget):
         
         # TODO: add routine to add PlotWidgets (mb by interface)
         # TODO: add scrolling
-        # TODO: mind how work with plots sizes
+        # TODO: how to work with plots sizes?
         
         self.stub = PlotWidget()
         layout.addWidget(self.stub)

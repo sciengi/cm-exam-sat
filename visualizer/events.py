@@ -7,6 +7,12 @@ from weakref import WeakMethod
 
 
 class EventResolver:
+    ''' Cast event-record from source to dict with preprocessed fields '''
+    
+    # TIP: if you need preprocess event fields
+    #      - add to __init__ our function
+    #      - add to self._conv new (event ID, function) pair
+    
     def __init__(self):
         pattern = r'(?P<scope>\w+)\((?P<subject>\w+)\):\s*(?P<msg>.*)'
         self._base_pattern = re.compile(pattern)
@@ -15,11 +21,14 @@ class EventResolver:
             event['data'] = np.array([float(v) for v in event['msg'].split()])
             del event['msg']
         
+        # TODO: connect event type and conversion on it, 
+        #       check pydantic package
+        
         self._conv = {
             ('SYSTEM', 'data'): _sysdata_conv
         }
     
-    # TODO(extra): add ability to add pattern and converion in runtime
+    # TODO(extra): add ability to add pattern and conversion in runtime
     #              
     # def add_pattern(self) -> None: pass  
 
@@ -28,8 +37,6 @@ class EventResolver:
         if event_id in self._conv:
             self._conv[event_id](event)
 
-    # TODO: connect event type and conversion on it, 
-    #       check pydantic package
     def resolve(self, record: str) -> dict:
         result = re.match(self._base_pattern, record)
         
@@ -47,8 +54,8 @@ class EventResolver:
 
 
 class EventDispatcher:
-    ''' Dispatch events to recipents by their id '''
-    
+    ''' Dispatch event to recipents '''
+        
     def __init__(self):
         self._route_table = {}
     
@@ -56,22 +63,21 @@ class EventDispatcher:
         return self._route_table.get(event_id, [])
     
     def add_rule(self, event_id, recipent_method) -> self:  # DEV: chain rule
-        print(f'[EventDispatcher]: add rule: {event_id} to {recipent_method}')  # TODO: add logging
-        # self._get_recipients(event_id).append(WeakMethod(recipent_method))  # BUG
-        
+        # TODO: add placeholders ANY scope and any subject
+        # TODO: refactor or pass
+        #     self._get_recipients(event_id).append(WeakMethod(recipent_method)) 
+        # changed to:
         if event_id in self._route_table:
             self._route_table[event_id].append(WeakMethod(recipent_method))
         else:
             self._route_table[event_id] = [WeakMethod(recipent_method)]
-            
+        
         return self
     
     def dispatch(self, event: dict) -> None:
         event_id = (event['scope'], event['subject'])
-        print(f'[EventDispatcher]: dispatch {event_id}')
         still_alive = []
         for recipient in self._get_recipients(event_id):
-            print(f'[EventDispatcher]: in-loop {recipient} call {event}')
             if recipient is not None:
                 recipient()(event)
                 still_alive.append(recipient)

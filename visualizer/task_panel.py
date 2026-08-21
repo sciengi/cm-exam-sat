@@ -30,15 +30,17 @@ class TaskPanel(QWidget):
         box_layout.addWidget(self.event_viewer, stretch=1)
         
         self.plots = PlotsPanel()
-        # self.event_subscibe_requested.emit(('SYSTEM', 'data'), self.plots.update)  # TODO:
-        # self.event_subscibe_requested.emit(('METRIC', 'any'), self.plots.update)  # TODO:
         layout.addWidget(self.plots, stretch=1)
         
-    def _event_subscribe_requested_emit(self):  # TODO: think how to make reliably (BUG with .connecy in MainWindow)
+    def _event_subscribe_requested_emit(self):
         self.event_subscribe_requested.emit(('SYSTEM', 'data'), self.viewport.update)
         
-        self.event_subscribe_requested.emit(('SYSTEM',    'data'),       self.event_viewer.update)
-        self.event_subscribe_requested.emit(('SYSTEM',    'status'),     self.event_viewer.update)
-        self.event_subscribe_requested.emit(('TASK',      'setup'),      self.event_viewer.update)
-        self.event_subscribe_requested.emit(('CONSTRAIN', 'step_limit'), self.event_viewer.update)
+        self.event_subscribe_requested.emit(('SYSTEM',     'data'),        self.event_viewer.update)
+        self.event_subscribe_requested.emit(('SYSTEM',     'status'),      self.event_viewer.update)
+        self.event_subscribe_requested.emit(('TASK',       'setup'),       self.event_viewer.update)
+        self.event_subscribe_requested.emit(('CONSTRAIN',  'step_limit'),  self.event_viewer.update)
+        self.event_subscribe_requested.emit(('VISUALIZER', 'task_source'), self.event_viewer.update)
+        
+        # self.event_subscibe_requested.emit(('SYSTEM', 'data'), self.plots.update)  # TODO:
+        # self.event_subscibe_requested.emit(('METRIC', 'any'), self.plots.update)  # TODO:
         

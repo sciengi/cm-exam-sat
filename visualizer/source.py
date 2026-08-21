@@ -1,7 +1,6 @@
 
 from abc import ABC, abstractmethod
 
-
 # TODO: whose responsibility is it to check the source? (e.g. FileSource with not solver log)
 
 

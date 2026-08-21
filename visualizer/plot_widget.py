@@ -18,7 +18,7 @@ class PlotWidget(QWidget):
         
         self.figure = Figure(figsize=(5, 4), dpi=100)
         self.canvas = FigureCanvas(self.figure)
-        self.canvas.setFixedSize(500, 400)  # TODO: mind plot's geometry
+        self.canvas.setFixedSize(500, 400)  # TODO: save plot's geometry
         
         self.ax = self.figure.add_subplot()
         

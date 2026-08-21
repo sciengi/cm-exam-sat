@@ -16,13 +16,17 @@ class ConsoleWindow(QMainWindow):
         self.setCentralWidget(central_widget)
         layout = QVBoxLayout(central_widget)
         
-        self.kernel_manager = QtInProcessKernelManager()  # TODO: read about 
+        # TODO: read about QtInProcessKernelManager and RichJupyterWidget:
+        #       - what is a channelS? 
+        #       - use widget without QtInProcessKernelManager?
+        
+        self.kernel_manager = QtInProcessKernelManager()   
         self.kernel_manager.start_kernel()                
         
         self.kernel_client = self.kernel_manager.client()
-        self.kernel_client.start_channels()  # TODO: channelS?
+        self.kernel_client.start_channels()
 
-        self.console = RichJupyterWidget()  # TODO: use widget without QtInProcessKernelManager?
+        self.console = RichJupyterWidget()
         self.console.kernel_manager = self.kernel_manager
         self.console.kernel_client  = self.kernel_client
         self.console.set_default_style('linux')
@@ -30,7 +34,8 @@ class ConsoleWindow(QMainWindow):
         self.console.font_family = 'Consolas'
         self.console.font_size = 14
 
-        self.kernel_manager.kernel.shell.push({  # TODO: filter PlotPanel and Source data, how to sync them?
+        # TODO(core): push PlotPanel and events to shell, how to sync shell instance with app?
+        self.kernel_manager.kernel.shell.push({
             "var": "PUSHED"
         })
 

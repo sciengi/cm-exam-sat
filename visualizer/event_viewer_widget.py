@@ -22,7 +22,7 @@ class EventViewerWidget(QWidget):
         
         scroll.setWidget(self.event_fields)
         
-        # TODO: add filter capability to event data, event them selves,
+        # TODO: add the ability to filter events and incoming data
         #       add signature for functions
         #       add runtime access to filters
         def sysdata_filter(key, value):
