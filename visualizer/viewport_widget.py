@@ -38,9 +38,12 @@ class ViewportWidget(QWidget):
         self.view.addItem(self.mesh_item)
         
     def update(self, event: dict):
-        centers = event['data']
+        centers = event['data'].reshape((-1, 3))  # DEV: suppose that dim = 3
+        centers = centers[:len(centers) // 2]  
+        # DEV: system vector contains postion and velocity in sequence,
+        #      i.e. [x1, y1, z1, ..., vx1, vy1, vz1, ...]
 
-        if len(centers) == 0:  # TODO: event is correct by default
+        if len(centers) == 0:  # TODO: event is correct by default, is this need?
             self.mesh_item.setVisible(False)
             self.mesh_item.update()
             return
