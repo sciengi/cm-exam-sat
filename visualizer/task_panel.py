@@ -39,6 +39,6 @@ class TaskPanel(QWidget):
         
         self.event_subscribe_requested.emit(('SYSTEM',    'data'),       self.event_viewer.update)
         self.event_subscribe_requested.emit(('SYSTEM',    'status'),     self.event_viewer.update)
-        self.event_subscribe_requested.emit(('TASK',      'status'),     self.event_viewer.update)
+        self.event_subscribe_requested.emit(('TASK',      'setup'),      self.event_viewer.update)
         self.event_subscribe_requested.emit(('CONSTRAIN', 'step_limit'), self.event_viewer.update)
         
