@@ -39,7 +39,7 @@ class ViewportWidget(QWidget):
         
     def update(self, event: dict):
         centers = event['data'].reshape((-1, 3))  # DEV: suppose that dim = 3
-        centers = centers[:len(centers) // 2]  
+        centers = centers[:len(centers) // 2]     # TODO: add checkbox to visualize speeds
         # DEV: system vector contains postion and velocity in sequence,
         #      i.e. [x1, y1, z1, ..., vx1, vy1, vz1, ...]
 

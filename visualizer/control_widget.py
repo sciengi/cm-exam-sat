@@ -1,6 +1,7 @@
 
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QPushButton, QFileDialog
+from PySide6.QtGui import QKeySequence
 
 from console_window import ConsoleWindow
 
@@ -31,6 +32,7 @@ class ControlWidget(QWidget):
         # TODO: think about buttons state (no source - all disabled, etc)
         
         self.btn_step_forward = QPushButton('Step')
+        self.btn_step_forward.setShortcut(QKeySequence("Right"))
         self.btn_step_forward.clicked.connect(lambda: self.step_requested.emit())
         layout.addWidget(self.btn_step_forward)
         
