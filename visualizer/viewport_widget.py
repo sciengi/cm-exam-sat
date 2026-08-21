@@ -21,8 +21,11 @@ class ViewportWidget(QWidget):
         grid.setSpacing(x=0.2, y=0.2, z=0.2)
         self.view.addItem(grid)
 
+        # TODO: learn about pyqtgraph
         # TODO: move to "AtomRepresentation" class
+        
         sphere_mesh_data = MeshData.sphere(rows=12, cols=12, radius=0.01)
+        sphere_mesh_data.faceNormals()
         self.base_verts = sphere_mesh_data.vertexes()
         self.base_faces = sphere_mesh_data.faces()
 
@@ -31,16 +34,18 @@ class ViewportWidget(QWidget):
             smooth=True,
             glOptions='opaque'
         )
+        self.mesh_item.setVisible(False)
         self.view.addItem(self.mesh_item)
         
-        self.update()
-        
-    def update(self):
-        
-        # TODO: split generation (that will be reading from solver) and update
-        # TODO(future): read about gl routines: how to render effective 
-        
-        centers = np.random.uniform(-1., 1., (100, 3))
+    def update(self, event: dict):
+        centers = event['data']
+
+        if len(centers) == 0:  # TODO: event is correct by default
+            self.mesh_item.setVisible(False)
+            self.mesh_item.update()
+            return
+
+        self.mesh_item.setVisible(True)
 
         all_verts = []
         all_faces = []
@@ -62,8 +67,16 @@ class ViewportWidget(QWidget):
         final_faces = np.vstack(all_faces)
         final_colors = np.vstack(all_colors)
 
-        md = MeshData(vertexes=final_verts, faces=final_faces, faceColors=final_colors)  # DEV: MeshData for normals calculation
+        md = MeshData(
+            vertexes=final_verts, 
+            faces=final_faces, 
+            faceColors=final_colors
+        )
+        
+        md.faceNormals()
+        md.vertexNormals()
         
         self.mesh_item.setMeshData(meshdata=md)
         self.mesh_item.opts['lightPos'] = (5, 5, 10)
         self.mesh_item.update()
+        

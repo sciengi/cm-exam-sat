@@ -8,6 +8,7 @@ from console_window import ConsoleWindow
 class ControlWidget(QWidget):
     
     new_task_selected = Signal(str)
+    step_requested = Signal() 
     
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -27,10 +28,10 @@ class ControlWidget(QWidget):
         self.btn_console.clicked.connect(self.open_console)
         layout.addWidget(self.btn_console)
         
-        # TODO: add task control widget
+        # TODO: add task control widget, to dispatch events in one place
         
         self.btn_step_forward = QPushButton('Step')
-        self.btn_step_forward.setEnabled(False)
+        self.btn_step_forward.clicked.connect(lambda: self.step_requested.emit())
         layout.addWidget(self.btn_step_forward)
         
         self.btn_step_backward = QPushButton('Back')
@@ -48,5 +49,6 @@ class ControlWidget(QWidget):
             
     def browse_task(self):
         filepath, _ = QFileDialog.getOpenFileName(self, caption='', dir='')  # TODO: setup filter and dir
-        if filepath is not None:
+        if filepath:
             self.new_task_selected.emit(filepath)
+            
